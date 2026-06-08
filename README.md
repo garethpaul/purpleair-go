@@ -1,5 +1,7 @@
 # PurpleAir Golang Parser
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
 
 ## Install
 
@@ -23,4 +25,3 @@ func main() {
     }
 }
 ```
-
