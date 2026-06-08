@@ -44,3 +44,6 @@ should not log full responses by default.
 - Hidden global HTTP configuration
 - Live-network-only tests
 - Silent changes to public result fields
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
