@@ -16,7 +16,7 @@ Priority:
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
-- Maintain module metadata, mocked HTTP tests, and `make verify`
+- Maintain module metadata, mocked HTTP tests, and `make check`
 
 Next priorities:
 

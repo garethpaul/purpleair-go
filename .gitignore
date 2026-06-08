@@ -1,0 +1,17 @@
+# Binaries and build outputs
+/bin/
+/dist/
+/build/
+*.test
+*.out
+coverage.out
+
+# Local env/editor state
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
