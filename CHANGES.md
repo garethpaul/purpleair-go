@@ -8,3 +8,5 @@
 - Added `make verify` for Go formatting checks and the full test suite.
 - Added `make check` as the shared repository verification alias.
 - Added mocked coverage for malformed JSON and empty sensor result responses, and made empty result sets return an explicit `SensorWithError` error.
+- Added canonical `docs/plans` coverage and made `make verify` require the
+  completed baseline plan.

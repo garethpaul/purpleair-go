@@ -9,6 +9,9 @@ a simple client constructor, and tests for basic client configuration.
 The goal is to make the client safer and more maintainable while preserving the
 straightforward sensor lookup workflow.
 
+Current baseline: `make check` verifies Go formatting, mocked unit tests, and
+canonical `docs/plans` coverage without calling the live PurpleAir endpoint.
+
 The current focus is:
 
 Priority:
@@ -17,6 +20,7 @@ Priority:
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, and `make check`
+- Keep completed maintenance plans under `docs/plans`
 
 Next priorities:
 

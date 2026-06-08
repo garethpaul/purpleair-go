@@ -16,6 +16,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `Makefile` - local verification entry points
 - `go.mod`
 - `go.sum`
+- `docs/plans` - canonical completed maintenance plans
 - `plans` - completed maintenance plans
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
@@ -56,7 +57,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `make verify`
 
-`make check` delegates to `make verify`, which checks Go formatting and runs the full test suite. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
+`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies the canonical completed plan under `docs/plans`. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -74,6 +75,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `docs/plans/2026-06-08-purpleair-go-baseline.md` for the canonical
+  deterministic client-test baseline.
 
 ## Contributing
 
