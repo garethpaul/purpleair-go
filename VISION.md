@@ -21,7 +21,6 @@ Priority:
 Next priorities:
 
 - Migrate callers from `Sensor` to `SensorWithError`
-- Add more parsing tests for edge-case PurpleAir responses
 - Document client timeout and user-agent defaults
 - Document endpoint assumptions and API availability
 

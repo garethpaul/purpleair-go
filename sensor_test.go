@@ -51,3 +51,39 @@ func TestSensorWithErrorReturnsStatusErrors(t *testing.T) {
 		t.Fatalf("expected unexpected status error, got %v", err)
 	}
 }
+
+func TestSensorWithErrorReturnsMalformedJSONErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[`))
+	}))
+	defer server.Close()
+
+	client := NewClient()
+	client.baseURL = server.URL + "/json"
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Error(t, err)
+	assert.Nil(t, sensor)
+}
+
+func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[]}`))
+	}))
+	defer server.Close()
+
+	client := NewClient()
+	client.baseURL = server.URL + "/json"
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("missing")
+
+	assert.Nil(t, sensor)
+	if err == nil || !strings.Contains(err.Error(), `no results for sensor "missing"`) {
+		t.Fatalf("expected no-results error, got %v", err)
+	}
+}

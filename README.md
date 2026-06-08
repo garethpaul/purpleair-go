@@ -48,13 +48,14 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
+- `SensorWithError(sensorID)` returns errors for request failures, non-2xx responses, malformed JSON, and successful responses that contain no sensor results.
 
 ## Testing and Verification
 
 - `go test ./...`
 - `make verify`
 
-`make verify` checks Go formatting and runs the full test suite. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint.
+`make verify` checks Go formatting and runs the full test suite. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

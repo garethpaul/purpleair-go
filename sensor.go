@@ -59,6 +59,10 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 		return nil, err
 	}
 
+	if len(pa.Results) == 0 {
+		return nil, fmt.Errorf("purpleair: no results for sensor %q", sensorId)
+	}
+
 	return &pa, nil
 }
 

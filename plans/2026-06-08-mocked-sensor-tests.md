@@ -27,5 +27,4 @@ endpoint. In this environment that request timed out, and the library path used
 ## Follow-Up Candidates
 
 - Add examples for `SensorWithError`.
-- Add tests for malformed JSON and empty sensor result sets.
 - Consider deprecating `Sensor` after callers can migrate.
