@@ -35,6 +35,17 @@ func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	assert.Equal(t, "Test Sensor", sensor.Results[0].Label)
 }
 
+func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
+	client := NewClient()
+
+	sensor, err := client.SensorWithError(" \t\n")
+
+	assert.Nil(t, sensor)
+	if err == nil || !strings.Contains(err.Error(), "sensor id is required") {
+		t.Fatalf("expected sensor id error, got %v", err)
+	}
+}
+
 func TestSensorWithErrorReturnsStatusErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unavailable", http.StatusServiceUnavailable)

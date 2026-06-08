@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	defaultBaseURL     = "https://www.purpleair.com/json"
+	defaultHTTPTimeout = 5 * time.Minute
+)
+
 // Client .
 type Client struct {
 	baseURL    string
@@ -14,9 +19,21 @@ type Client struct {
 // NewClient creates new PurpleApi client
 func NewClient() *Client {
 	return &Client{
-		HTTPClient: &http.Client{
-			Timeout: 5 * time.Minute,
-		},
-		baseURL: "https://www.purpleair.com/json",
+		HTTPClient: defaultHTTPClient(),
+		baseURL:    defaultBaseURL,
 	}
+}
+
+func defaultHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: defaultHTTPTimeout,
+	}
+}
+
+func (c *Client) httpClient() *http.Client {
+	if c != nil && c.HTTPClient != nil {
+		return c.HTTPClient
+	}
+
+	return defaultHTTPClient()
 }

@@ -49,7 +49,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
-- `SensorWithError(sensorID)` returns errors for request failures, non-2xx responses, malformed JSON, and successful responses that contain no sensor results.
+- `SensorWithError(sensorID)` returns errors for blank sensor IDs, request failures, non-2xx responses, malformed JSON, and successful responses that contain no sensor results.
+- `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
 
 ## Testing and Verification
 
@@ -57,7 +58,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `make verify`
 
-`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies the canonical completed plan under `docs/plans`. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
+`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies completed plans under `docs/plans`. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -77,6 +78,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-purpleair-go-baseline.md` for the canonical
   deterministic client-test baseline.
+- See `docs/plans/2026-06-08-client-input-and-timeout-guards.md` for the
+  sensor ID and timeout guard baseline.
 
 ## Contributing
 

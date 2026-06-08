@@ -1,9 +1,11 @@
 .PHONY: check docs fmt test verify
 
 docs:
-	test -f docs/plans/2026-06-08-purpleair-go-baseline.md
-	grep -q "Status: Completed" docs/plans/2026-06-08-purpleair-go-baseline.md
-	grep -q "make check" docs/plans/2026-06-08-purpleair-go-baseline.md
+	@for plan in docs/plans/*.md; do \
+		test -f "$$plan"; \
+		grep -q "Status: Completed" "$$plan"; \
+		grep -q "make check" "$$plan"; \
+	done
 
 fmt:
 	test -z "$$(gofmt -l *.go)"

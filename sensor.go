@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const purpleAirUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
@@ -23,6 +24,11 @@ func (c *Client) Sensor(sensorId string) *PurpleAir {
 
 // SensorWithError gets sensor data and returns request, response, and parsing errors.
 func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
+	sensorId = strings.TrimSpace(sensorId)
+	if sensorId == "" {
+		return nil, fmt.Errorf("purpleair: sensor id is required")
+	}
+
 	req, err := http.NewRequest(http.MethodGet, c.sensorURL(sensorId), nil)
 	if err != nil {
 		return nil, err
@@ -30,12 +36,7 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 
 	req.Header.Set("User-Agent", purpleAirUserAgent)
 
-	httpClient := c.HTTPClient
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
-
-	res, getErr := httpClient.Do(req)
+	res, getErr := c.httpClient().Do(req)
 	if getErr != nil {
 		return nil, getErr
 	}
@@ -67,9 +68,9 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 }
 
 func (c *Client) sensorURL(sensorId string) string {
-	baseURL := c.baseURL
-	if baseURL == "" {
-		baseURL = "https://www.purpleair.com/json"
+	baseURL := defaultBaseURL
+	if c != nil && c.baseURL != "" {
+		baseURL = c.baseURL
 	}
 
 	parsed, err := url.Parse(baseURL)

@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Added blank sensor ID validation and default timeout coverage for zero-value
+  clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.
 - Updated `Sensor` to keep the original API while delegating to the error-returning implementation.
 - Replaced the live-network sensor test with mocked HTTP coverage for successful and failed responses.

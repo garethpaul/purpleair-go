@@ -10,7 +10,7 @@ The goal is to make the client safer and more maintainable while preserving the
 straightforward sensor lookup workflow.
 
 Current baseline: `make check` verifies Go formatting, mocked unit tests, and
-canonical `docs/plans` coverage without calling the live PurpleAir endpoint.
+completed `docs/plans` coverage without calling the live PurpleAir endpoint.
 
 The current focus is:
 
@@ -21,11 +21,12 @@ Priority:
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, and `make check`
 - Keep completed maintenance plans under `docs/plans`
+- Reject blank sensor IDs before making HTTP requests
 
 Next priorities:
 
 - Migrate callers from `Sensor` to `SensorWithError`
-- Document client timeout and user-agent defaults
+- Add examples for `SensorWithError`
 - Document endpoint assumptions and API availability
 
 Contribution rules:
