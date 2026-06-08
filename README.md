@@ -1,5 +1,8 @@
 # purpleair-go
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 ## Overview
 
 `garethpaul/purpleair-go` is a Go project. GoLang Parser for PurpleAir
@@ -72,4 +75,3 @@ Keep changes small and tied to the project that is already present in this repos
 Prior README summary:
 
 > PurpleAir Golang Parser <!-- README-OVERVIEW-IMAGE --> Install `go get -u github.com/garethpaul/purpleair-go` Usage
-
