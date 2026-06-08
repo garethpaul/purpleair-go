@@ -34,6 +34,11 @@ Contribution rules:
 
 ## Security And Responsible Use
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 Sensor data can imply location and environmental conditions. The client should
 avoid surprising data collection, should make requested sensor IDs explicit, and
 should not log full responses by default.
