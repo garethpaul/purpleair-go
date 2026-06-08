@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Added executable `SensorWithError` examples for mocked success and blank
+  sensor ID error paths.
 - Added blank sensor ID validation and default timeout coverage for zero-value
   clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.

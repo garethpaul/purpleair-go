@@ -20,13 +20,13 @@ Priority:
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, and `make check`
+- Keep executable examples for the preferred error-returning API
 - Keep completed maintenance plans under `docs/plans`
 - Reject blank sensor IDs before making HTTP requests
 
 Next priorities:
 
 - Migrate callers from `Sensor` to `SensorWithError`
-- Add examples for `SensorWithError`
 - Document endpoint assumptions and API availability
 
 Contribution rules:

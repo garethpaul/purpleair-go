@@ -58,7 +58,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `make verify`
 
-`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies completed plans under `docs/plans`. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
+`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies completed plans under `docs/plans`. Tests and executable examples use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -80,6 +80,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   deterministic client-test baseline.
 - See `docs/plans/2026-06-08-client-input-and-timeout-guards.md` for the
   sensor ID and timeout guard baseline.
+- See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
+  `SensorWithError` examples baseline.
 
 ## Contributing
 
