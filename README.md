@@ -74,4 +74,4 @@ Keep changes small and tied to the project that is already present in this repos
 
 Prior README summary:
 
-> PurpleAir Golang Parser <!-- README-OVERVIEW-IMAGE --> Install `go get -u github.com/garethpaul/purpleair-go` Usage
+> PurpleAir Golang Parser Install `go get -u github.com/garethpaul/purpleair-go` Usage
