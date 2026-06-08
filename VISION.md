@@ -38,7 +38,7 @@ Sensor data can imply location and environmental conditions. The client should
 avoid surprising data collection, should make requested sensor IDs explicit, and
 should not log full responses by default.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Process exits from library error paths
 - Hidden global HTTP configuration
