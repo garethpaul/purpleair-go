@@ -1,14 +1,53 @@
 package purpleair
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+
 	assert "github.com/stretchr/testify/require"
 )
 
-func TestResults(t *testing.T) {
-	// assert equality
+func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		assert.Equal(t, "/json", r.URL.Path)
+		assert.Equal(t, "17937", r.URL.Query().Get("show"))
+		assert.Equal(t, purpleAirUserAgent, r.Header.Get("User-Agent"))
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Test Sensor"}]}`))
+	}))
+	defer server.Close()
+
 	client := NewClient()
-	s:= client.Sensor("17937")
-	ResultsLength:= len(s.Results)
-	assert.GreaterOrEqualf(t, ResultsLength, 1, "error message %s", "formatted")
+	client.baseURL = server.URL + "/json"
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, requests)
+	assert.Len(t, sensor.Results, 1)
+	assert.Equal(t, 17937, sensor.Results[0].ID)
+	assert.Equal(t, "Test Sensor", sensor.Results[0].Label)
+}
+
+func TestSensorWithErrorReturnsStatusErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unavailable", http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	client := NewClient()
+	client.baseURL = server.URL + "/json"
+	client.HTTPClient = server.Client()
+
+	_, err := client.SensorWithError("17937")
+
+	if err == nil || !strings.Contains(err.Error(), "unexpected status 503") {
+		t.Fatalf("expected unexpected status error, got %v", err)
+	}
 }

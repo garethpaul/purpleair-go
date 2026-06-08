@@ -1,7 +1,7 @@
 package purpleair
 
 type Results struct {
-    Results []Result `json:"results"`
+	Results []Result `json:"results"`
 }
 
 type Result struct {
@@ -48,8 +48,8 @@ type Result struct {
 }
 
 type PurpleAir struct {
-	MapVersion       string `json:"mapVersion"`
-	BaseVersion      string `json:"baseVersion"`
-	MapVersionString string `json:"mapVersionString"`
-	Results 		 []Result `json:"results"`
+	MapVersion       string   `json:"mapVersion"`
+	BaseVersion      string   `json:"baseVersion"`
+	MapVersionString string   `json:"mapVersionString"`
+	Results          []Result `json:"results"`
 }

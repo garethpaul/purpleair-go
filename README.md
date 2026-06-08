@@ -12,16 +12,19 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 ## Repository Contents
 
 - `README.md` - project overview and local usage notes
+- `CHANGES.md` - notable maintenance changes
+- `Makefile` - local verification entry points
 - `go.mod`
 - `go.sum`
+- `plans` - completed maintenance plans
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
 
 - Source directories: no top-level source directories detected
-- Dependency and build manifests: go.mod, go.sum
-- Entry points or build surfaces: none detected
+- Dependency and build manifests: go.mod, go.sum, Makefile
+- Entry points or build surfaces: Makefile
 - Test-looking files: client_test.go, sensor_test.go
 
 ## Getting Started
@@ -43,11 +46,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- No single runtime entry point was identified. Start by reading the source files and manifests listed above.
+- Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
+- Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
 
 ## Testing and Verification
 
 - `go test ./...`
+- `make verify`
+
+`make verify` checks Go formatting and runs the full test suite. Tests use mocked HTTP servers and do not call the live PurpleAir endpoint.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

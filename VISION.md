@@ -16,13 +16,13 @@ Priority:
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
-- Maintain module metadata and basic tests
+- Maintain module metadata, mocked HTTP tests, and `make verify`
 
 Next priorities:
 
-- Return errors instead of exiting the process with `log.Fatal`
-- Use the client's configured base URL and HTTP client in requests
-- Add mocked HTTP tests for successful and failed sensor responses
+- Migrate callers from `Sensor` to `SensorWithError`
+- Add more parsing tests for edge-case PurpleAir responses
+- Document client timeout and user-agent defaults
 - Document endpoint assumptions and API availability
 
 Contribution rules:

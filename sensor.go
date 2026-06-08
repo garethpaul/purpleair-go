@@ -2,48 +2,79 @@ package purpleair
 
 import (
 	"encoding/json"
-    "io/ioutil"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
+	"net/url"
 )
 
+const purpleAirUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
+
 // Get Sensor Data
-func (c *Client) Sensor(sensorId string) (*PurpleAir) {
-
-	url := "https://www.purpleair.com/json?show=" + sensorId
-
-	spaceClient := http.Client{
-		Timeout: time.Second * 2, // Timeout after 2 seconds
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func (c *Client) Sensor(sensorId string) *PurpleAir {
+	pa, err := c.SensorWithError(sensorId)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36")
+	return pa
+}
 
-	res, getErr := spaceClient.Do(req)
+// SensorWithError gets sensor data and returns request, response, and parsing errors.
+func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
+	req, err := http.NewRequest(http.MethodGet, c.sensorURL(sensorId), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", purpleAirUserAgent)
+
+	httpClient := c.HTTPClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
+	res, getErr := httpClient.Do(req)
 	if getErr != nil {
-		log.Fatal(getErr)
+		return nil, getErr
 	}
 
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
 
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("purpleair: unexpected status %d", res.StatusCode)
 	}
 
-    // we initialize our Users array
-    var pa PurpleAir
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		return nil, readErr
+	}
 
-    // we unmarshal our byteArray which contains our
-    // jsonFile's content into 'users' which we defined above
-    json.Unmarshal(body, &pa)
+	var pa PurpleAir
 
-	return &pa
+	if err := json.Unmarshal(body, &pa); err != nil {
+		return nil, err
+	}
+
+	return &pa, nil
+}
+
+func (c *Client) sensorURL(sensorId string) string {
+	baseURL := c.baseURL
+	if baseURL == "" {
+		baseURL = "https://www.purpleair.com/json"
+	}
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return baseURL + "?show=" + url.QueryEscape(sensorId)
+	}
+
+	query := parsed.Query()
+	query.Set("show", sensorId)
+	parsed.RawQuery = query.Encode()
+	return parsed.String()
 }
