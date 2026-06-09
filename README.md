@@ -63,6 +63,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   configuration or request headers outside the checked-in URL instead.
 - Custom base URLs must not include URL fragments; keep local-only tokens or
   notes out of endpoint strings.
+- `SensorWithError` wraps transport failures with PurpleAir-specific request
+  context while preserving the original Go error.
 
 ## Testing and Verification
 
@@ -73,7 +75,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `make verify`
 
-`make check` delegates to `make verify`, which checks Go formatting, runs the full test suite, and verifies completed plans under `docs/plans`. Tests and executable examples use mocked HTTP servers and do not call the live PurpleAir endpoint, including response validation edge cases.
+`make check` delegates to `make verify`, which checks Go formatting, runs the
+full test suite, runs the Go build-through-test gate, and verifies completed
+plans under `docs/plans`. Tests and executable examples use mocked HTTP
+servers and do not call the live PurpleAir endpoint, including response
+validation edge cases.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

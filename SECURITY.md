@@ -44,6 +44,8 @@ endpoint configuration.
 instead of panicking or treating malformed upstream responses as valid data.
 It should also reject nil HTTP responses from custom transports before reading
 status codes or response bodies.
+Transport failures should include PurpleAir-specific request context while
+preserving the underlying Go error for callers that inspect error chains.
 
 ## Dependency and Supply Chain Security
 
