@@ -26,6 +26,7 @@ Priority:
 - Keep alternate endpoint configuration explicit through constructors
 - Keep custom endpoint URLs constrained to absolute HTTP(S) URLs
 - Reject custom endpoint URLs that embed username/password credentials
+- Reject custom endpoint URLs that include fragments
 
 Next priorities:
 

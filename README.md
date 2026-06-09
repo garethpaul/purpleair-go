@@ -59,6 +59,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   values fall back to the default PurpleAir JSON endpoint.
 - Custom base URLs must not embed username/password credentials; use local
   configuration or request headers outside the checked-in URL instead.
+- Custom base URLs must not include URL fragments; keep local-only tokens or
+  notes out of endpoint strings.
 
 ## Testing and Verification
 
@@ -81,6 +83,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include client.go, client_test.go, results.go, sensor.go.
 - `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so
   endpoint configuration does not hide secrets in the base URL.
+- `NewClientWithBaseURL` rejects URL fragments so local-only tokens or notes
+  do not hide in endpoint configuration.
 
 ## Maintenance Notes
 
@@ -98,6 +102,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   endpoint URL validation guard.
 - See `docs/plans/2026-06-09-custom-base-url-credentials-guard.md` for the
   custom endpoint credential guard.
+- See `docs/plans/2026-06-09-custom-base-url-fragment-guard.md` for the custom
+  endpoint fragment guard.
 
 ## Contributing
 

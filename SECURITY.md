@@ -38,6 +38,8 @@ Custom PurpleAir-compatible endpoints should not embed username/password
 credentials in the base URL. `NewClientWithBaseURL` rejects URL userinfo and
 falls back to the default endpoint so secrets are not hidden in endpoint
 strings.
+It also rejects URL fragments so local-only tokens or notes do not hide in
+endpoint configuration.
 
 ## Dependency and Supply Chain Security
 
