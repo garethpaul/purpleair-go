@@ -41,9 +41,11 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 		return nil, getErr
 	}
 
-	if res.Body != nil {
-		defer res.Body.Close()
+	if res.Body == nil {
+		return nil, fmt.Errorf("purpleair: response body is empty")
 	}
+
+	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("purpleair: unexpected status %d", res.StatusCode)
@@ -52,6 +54,10 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
 		return nil, readErr
+	}
+
+	if strings.TrimSpace(string(body)) == "" {
+		return nil, fmt.Errorf("purpleair: response body is empty")
 	}
 
 	var pa PurpleAir

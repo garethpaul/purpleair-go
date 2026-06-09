@@ -40,6 +40,8 @@ falls back to the default endpoint so secrets are not hidden in endpoint
 strings.
 It also rejects URL fragments so local-only tokens or notes do not hide in
 endpoint configuration.
+`SensorWithError` should return explicit errors for empty HTTP response bodies
+instead of panicking or treating malformed upstream responses as valid data.
 
 ## Dependency and Supply Chain Security
 

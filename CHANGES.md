@@ -12,6 +12,8 @@
   fall back to the default PurpleAir JSON endpoint.
 - Added custom base URL fragment validation so local-only tokens or notes do
   not hide in endpoint strings.
+- Added an empty response-body guard so `SensorWithError` returns an error
+  instead of decoding an empty body.
 - Added blank sensor ID validation and default timeout coverage for zero-value
   clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.

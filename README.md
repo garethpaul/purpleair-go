@@ -51,7 +51,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
-- `SensorWithError(sensorID)` returns errors for blank sensor IDs, request failures, non-2xx responses, malformed JSON, and successful responses that contain no sensor results.
+- `SensorWithError(sensorID)` returns errors for blank sensor IDs, request failures, empty response bodies, non-2xx responses, malformed JSON, and successful responses that contain no sensor results.
 - `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
@@ -104,6 +104,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   custom endpoint credential guard.
 - See `docs/plans/2026-06-09-custom-base-url-fragment-guard.md` for the custom
   endpoint fragment guard.
+- See `docs/plans/2026-06-09-empty-response-body-guard.md` for the
+  `SensorWithError` empty-body error guard.
 
 ## Contributing
 

@@ -9,6 +9,12 @@ import (
 	assert "github.com/stretchr/testify/require"
 )
 
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
 func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +49,25 @@ func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
 	assert.Nil(t, sensor)
 	if err == nil || !strings.Contains(err.Error(), "sensor id is required") {
 		t.Fatalf("expected sensor id error, got %v", err)
+	}
+}
+
+func TestSensorWithErrorReturnsEmptyBodyErrors(t *testing.T) {
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       nil,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	if err == nil || !strings.Contains(err.Error(), "response body is empty") {
+		t.Fatalf("expected empty response body error, got %v", err)
 	}
 }
 
