@@ -6,6 +6,8 @@
   sensor ID error paths.
 - Added `NewClientWithBaseURL` for local proxies, fixture servers, and alternate
   PurpleAir-compatible endpoints.
+- Added custom base URL validation so malformed or non-HTTP endpoints fall back
+  to the default PurpleAir JSON endpoint.
 - Added blank sensor ID validation and default timeout coverage for zero-value
   clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.

@@ -30,6 +30,17 @@ func TestNewClientWithBaseURLFallsBackForBlankValues(t *testing.T) {
 	assert.Equal(t, defaultHTTPTimeout, client.HTTPClient.Timeout)
 }
 
+func TestNewClientWithBaseURLFallsBackForInvalidValues(t *testing.T) {
+	for _, baseURL := range []string{"://bad-url", "ftp://example.test/json", "https:///missing-host"} {
+		t.Run(baseURL, func(t *testing.T) {
+			client := NewClientWithBaseURL(baseURL)
+
+			assert.Equal(t, defaultBaseURL, client.baseURL)
+			assert.Equal(t, "https://www.purpleair.com/json?show=17937", client.sensorURL("17937"))
+		})
+	}
+}
+
 func TestZeroValueClientUsesDefaultTimeout(t *testing.T) {
 	client := Client{}
 

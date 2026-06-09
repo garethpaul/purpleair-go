@@ -2,6 +2,7 @@ package purpleair
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -29,11 +30,20 @@ func NewClient() *Client {
 func NewClientWithBaseURL(baseURL string) *Client {
 	client := NewClient()
 	baseURL = strings.TrimSpace(baseURL)
-	if baseURL != "" {
+	if isSupportedBaseURL(baseURL) {
 		client.baseURL = baseURL
 	}
 
 	return client
+}
+
+func isSupportedBaseURL(baseURL string) bool {
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return false
+	}
+
+	return (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Host != ""
 }
 
 func defaultHTTPClient() *http.Client {

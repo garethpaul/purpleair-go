@@ -24,6 +24,7 @@ Priority:
 - Keep completed maintenance plans under `docs/plans`
 - Reject blank sensor IDs before making HTTP requests
 - Keep alternate endpoint configuration explicit through constructors
+- Keep custom endpoint URLs constrained to absolute HTTP(S) URLs
 
 Next priorities:
 

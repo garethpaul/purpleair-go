@@ -55,6 +55,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
+- Custom base URLs must be absolute `http` or `https` URLs with a host; invalid
+  values fall back to the default PurpleAir JSON endpoint.
 
 ## Testing and Verification
 
@@ -88,6 +90,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `SensorWithError` examples baseline.
 - See `docs/plans/2026-06-09-custom-base-url-client.md` for the custom endpoint
   constructor guard.
+- See `docs/plans/2026-06-09-custom-base-url-validation.md` for the custom
+  endpoint URL validation guard.
 
 ## Contributing
 
