@@ -22,6 +22,7 @@ Priority:
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, `make lint`, `make build`, and
   `make check`
+- Keep a scriptable baseline guard for required files and local metadata
 - Keep executable examples for the preferred error-returning API
 - Keep completed maintenance plans under `docs/plans`
 - Reject blank sensor IDs before making HTTP requests

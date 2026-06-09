@@ -12,6 +12,7 @@ coverage.out
 .DS_Store
 .idea/
 .vscode/
+*.iml
 *.swp
 *.swo
 *~

@@ -4,6 +4,8 @@
 
 - Wrapped HTTP request failures with PurpleAir-specific context while
   preserving the original transport error.
+- Added `scripts/check-baseline.sh` and local metadata coverage for required
+  files, Go module metadata, completed plan metadata, and verification docs.
 - Added a nil HTTP response guard so custom transports return an error instead
   of panicking in `SensorWithError`.
 - Added `make lint` and `make build` aliases to match the shared repository

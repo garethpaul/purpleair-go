@@ -18,6 +18,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `go.sum`
 - `docs/plans` - canonical completed maintenance plans
 - `plans` - completed maintenance plans
+- `scripts/check-baseline.sh` - repository maintenance baseline guard
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
 
@@ -74,12 +75,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make build`
 - `make check`
 - `make verify`
+- `scripts/check-baseline.sh`
 
 `make check` delegates to `make verify`, which checks Go formatting, runs the
 full test suite, runs the Go build-through-test gate, and verifies completed
 plans under `docs/plans`. Tests and executable examples use mocked HTTP
 servers and do not call the live PurpleAir endpoint, including response
 validation edge cases.
+
+The baseline script checks required files, module metadata, completed docs-plan
+metadata, verification documentation, and local secret/editor metadata hygiene.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -119,6 +124,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `SensorWithError` empty-body error guard.
 - See `docs/plans/2026-06-09-request-failure-context.md` for request-failure
   context, nil-response handling, and repository gate aliases.
+- See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
+  repository baseline guard and local metadata checks.
 
 ## Contributing
 
