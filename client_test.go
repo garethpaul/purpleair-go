@@ -31,7 +31,7 @@ func TestNewClientWithBaseURLFallsBackForBlankValues(t *testing.T) {
 }
 
 func TestNewClientWithBaseURLFallsBackForInvalidValues(t *testing.T) {
-	for _, baseURL := range []string{"://bad-url", "ftp://example.test/json", "https:///missing-host"} {
+	for _, baseURL := range []string{"://bad-url", "ftp://example.test/json", "https:///missing-host", "https://user:pass@example.test/json"} {
 		t.Run(baseURL, func(t *testing.T) {
 			client := NewClientWithBaseURL(baseURL)
 

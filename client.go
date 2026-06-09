@@ -43,7 +43,7 @@ func isSupportedBaseURL(baseURL string) bool {
 		return false
 	}
 
-	return (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Host != ""
+	return (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Host != "" && parsed.User == nil
 }
 
 func defaultHTTPClient() *http.Client {

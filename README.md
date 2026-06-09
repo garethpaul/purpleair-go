@@ -57,6 +57,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   existing query parameters are preserved when the `show` sensor ID is added.
 - Custom base URLs must be absolute `http` or `https` URLs with a host; invalid
   values fall back to the default PurpleAir JSON endpoint.
+- Custom base URLs must not embed username/password credentials; use local
+  configuration or request headers outside the checked-in URL instead.
 
 ## Testing and Verification
 
@@ -77,6 +79,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching external API calls or credential-adjacent configuration; examples from the scan include client.go, client_test.go, go.mod, results.go, and 2 more.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include client.go, client_test.go, sensor.go.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include client.go, client_test.go, results.go, sensor.go.
+- `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so
+  endpoint configuration does not hide secrets in the base URL.
 
 ## Maintenance Notes
 
@@ -92,6 +96,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   constructor guard.
 - See `docs/plans/2026-06-09-custom-base-url-validation.md` for the custom
   endpoint URL validation guard.
+- See `docs/plans/2026-06-09-custom-base-url-credentials-guard.md` for the
+  custom endpoint credential guard.
 
 ## Contributing
 
