@@ -3,6 +3,7 @@ package purpleair
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,7 +11,10 @@ import (
 	"strings"
 )
 
-const purpleAirUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
+const (
+	purpleAirUserAgent     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
+	maxSensorResponseBytes = 1 << 20
+)
 
 // Get Sensor Data
 func (c *Client) Sensor(sensorId string) *PurpleAir {
@@ -55,9 +59,13 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 		return nil, fmt.Errorf("purpleair: unexpected status %d", res.StatusCode)
 	}
 
-	body, readErr := ioutil.ReadAll(res.Body)
+	body, readErr := ioutil.ReadAll(io.LimitReader(res.Body, maxSensorResponseBytes+1))
 	if readErr != nil {
 		return nil, readErr
+	}
+
+	if len(body) > maxSensorResponseBytes {
+		return nil, fmt.Errorf("purpleair: response body exceeds %d bytes", maxSensorResponseBytes)
 	}
 
 	if strings.TrimSpace(string(body)) == "" {

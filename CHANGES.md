@@ -2,6 +2,7 @@
 
 ## 2026-06-09
 
+- Added a sensor response body size guard before JSON parsing.
 - Wrapped HTTP request failures with PurpleAir-specific context while
   preserving the original transport error.
 - Added `scripts/check-baseline.sh` and local metadata coverage for required

@@ -1,6 +1,7 @@
 package purpleair
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -68,6 +69,25 @@ func TestSensorWithErrorReturnsEmptyBodyErrors(t *testing.T) {
 	assert.Nil(t, sensor)
 	if err == nil || !strings.Contains(err.Error(), "response body is empty") {
 		t.Fatalf("expected empty response body error, got %v", err)
+	}
+}
+
+func TestSensorWithErrorRejectsOversizedResponseBodies(t *testing.T) {
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader(strings.Repeat(" ", maxSensorResponseBytes+1))),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	if err == nil || !strings.Contains(err.Error(), "response body exceeds") {
+		t.Fatalf("expected oversized response body error, got %v", err)
 	}
 }
 

@@ -32,6 +32,7 @@ Priority:
 - Reject custom endpoint URLs that include fragments
 - Return explicit errors for nil HTTP responses from custom transports
 - Return explicit errors for empty HTTP response bodies
+- Bound sensor response body reads before JSON parsing
 - Wrap transport failures with PurpleAir-specific request context
 
 Next priorities:

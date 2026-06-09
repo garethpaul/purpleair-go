@@ -54,7 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
-  malformed JSON, and successful responses that contain no sensor results.
+  oversized response bodies, malformed JSON, and successful responses that
+  contain no sensor results.
 - `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
@@ -124,6 +125,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `SensorWithError` empty-body error guard.
 - See `docs/plans/2026-06-09-request-failure-context.md` for request-failure
   context, nil-response handling, and repository gate aliases.
+- See `docs/plans/2026-06-09-response-body-size-guard.md` for the
+  `SensorWithError` response body size guard.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and local metadata checks.
 
