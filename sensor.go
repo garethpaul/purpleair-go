@@ -38,7 +38,11 @@ func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
 
 	res, getErr := c.httpClient().Do(req)
 	if getErr != nil {
-		return nil, getErr
+		return nil, fmt.Errorf("purpleair: request failed: %w", getErr)
+	}
+
+	if res == nil {
+		return nil, fmt.Errorf("purpleair: request failed with nil response")
 	}
 
 	if res.Body == nil {

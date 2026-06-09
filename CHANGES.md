@@ -14,6 +14,12 @@
   not hide in endpoint strings.
 - Added an empty response-body guard so `SensorWithError` returns an error
   instead of decoding an empty body.
+- Wrapped HTTP request failures with PurpleAir-specific context while
+  preserving the original transport error.
+- Added a nil HTTP response guard so custom transports return an error instead
+  of panicking in `SensorWithError`.
+- Added `make lint` and `make build` aliases to match the shared repository
+  verification workflow.
 - Added blank sensor ID validation and default timeout coverage for zero-value
   clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.

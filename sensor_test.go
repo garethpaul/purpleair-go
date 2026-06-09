@@ -71,6 +71,22 @@ func TestSensorWithErrorReturnsEmptyBodyErrors(t *testing.T) {
 	}
 }
 
+func TestSensorWithErrorReturnsNilResponseErrors(t *testing.T) {
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return nil, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	if err == nil || !strings.Contains(err.Error(), "request failed") {
+		t.Fatalf("expected request failure error, got %v", err)
+	}
+}
+
 func TestSensorWithErrorReturnsStatusErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unavailable", http.StatusServiceUnavailable)

@@ -1,4 +1,4 @@
-.PHONY: check docs fmt test verify
+.PHONY: check build docs fmt lint test verify
 
 docs:
 	@for plan in docs/plans/*.md; do \
@@ -10,9 +10,13 @@ docs:
 fmt:
 	test -z "$$(gofmt -l *.go)"
 
+lint: fmt
+
 test:
 	go test ./...
 
-verify: fmt test docs
+build: test
+
+verify: lint test build docs
 
 check: verify

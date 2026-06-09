@@ -42,6 +42,8 @@ It also rejects URL fragments so local-only tokens or notes do not hide in
 endpoint configuration.
 `SensorWithError` should return explicit errors for empty HTTP response bodies
 instead of panicking or treating malformed upstream responses as valid data.
+It should also reject nil HTTP responses from custom transports before reading
+status codes or response bodies.
 
 ## Dependency and Supply Chain Security
 
