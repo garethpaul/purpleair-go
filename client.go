@@ -2,6 +2,7 @@ package purpleair
 
 import (
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,17 @@ func NewClient() *Client {
 		HTTPClient: defaultHTTPClient(),
 		baseURL:    defaultBaseURL,
 	}
+}
+
+// NewClientWithBaseURL creates a PurpleAir client for a custom endpoint.
+func NewClientWithBaseURL(baseURL string) *Client {
+	client := NewClient()
+	baseURL = strings.TrimSpace(baseURL)
+	if baseURL != "" {
+		client.baseURL = baseURL
+	}
+
+	return client
 }
 
 func defaultHTTPClient() *http.Client {

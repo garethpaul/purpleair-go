@@ -23,6 +23,7 @@ Priority:
 - Keep executable examples for the preferred error-returning API
 - Keep completed maintenance plans under `docs/plans`
 - Reject blank sensor IDs before making HTTP requests
+- Keep alternate endpoint configuration explicit through constructors
 
 Next priorities:
 

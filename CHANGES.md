@@ -4,6 +4,8 @@
 
 - Added executable `SensorWithError` examples for mocked success and blank
   sensor ID error paths.
+- Added `NewClientWithBaseURL` for local proxies, fixture servers, and alternate
+  PurpleAir-compatible endpoints.
 - Added blank sensor ID validation and default timeout coverage for zero-value
   clients.
 - Added `SensorWithError` so callers can handle request, response, and JSON parsing failures without a process exit.
