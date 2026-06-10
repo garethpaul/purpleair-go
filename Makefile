@@ -1,4 +1,4 @@
-.PHONY: check build docs fmt lint test vet verify
+.PHONY: check build docs fmt lint race test vet verify
 
 docs:
 	@for plan in docs/plans/*.md; do \
@@ -18,9 +18,12 @@ vet:
 test:
 	go test ./...
 
+race:
+	go test -race ./...
+
 build: test
 
-verify: lint vet test build docs
+verify: lint vet test race build docs
 
 check: verify
 	scripts/check-baseline.sh

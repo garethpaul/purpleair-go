@@ -21,7 +21,9 @@ Priority:
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, `make lint`, `make vet`,
-  `make build`, and `make check`
+  `make race`, `make build`, and `make check`
+- Run the canonical gate on current supported Go patch releases in hosted CI
+  with read-only permissions and pinned actions
 - Keep a scriptable baseline guard for required files and local metadata
 - Keep executable examples for the preferred error-returning API
 - Keep completed maintenance plans under `docs/plans`

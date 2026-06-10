@@ -14,6 +14,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `README.md` - project overview and local usage notes
 - `CHANGES.md` - notable maintenance changes
 - `Makefile` - local verification entry points
+- `.github/workflows/check.yml` - hosted current-Go verification matrix
 - `go.mod`
 - `go.sum`
 - `docs/plans` - canonical completed maintenance plans
@@ -71,7 +72,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `go test ./...`
+- `go test -race ./...`
 - `make lint`
+- `make race`
 - `make vet`
 - `make test`
 - `make build`
@@ -79,11 +82,14 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make verify`
 - `scripts/check-baseline.sh`
 
-`make vet` runs `go vet ./...`. `make check` delegates to `make verify`, which
-checks Go formatting, runs `go vet ./...`, runs the full test suite, runs the
-Go build-through-test gate, and verifies completed plans under `docs/plans`.
+`make vet` runs `go vet ./...`, and `make race` runs `go test -race ./...`.
+`make check` delegates to `make verify`, which checks Go formatting, vet, unit
+and race tests, the Go build-through-test gate, and completed plans under
+`docs/plans`.
 Tests and executable examples use mocked HTTP servers and do not call the live
 PurpleAir endpoint, including response validation edge cases.
+GitHub Actions runs the same gate on Go 1.25.11 and Go 1.26.4 with read-only
+permissions and pinned actions.
 
 The baseline script checks required files, module metadata, completed docs-plan
 metadata, verification documentation, and local secret/editor metadata hygiene.
@@ -132,6 +138,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   repository baseline guard and local metadata checks.
 - See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static
   analysis verification gate.
+- See `docs/plans/2026-06-10-hosted-go-validation.md` for the current-Go matrix
+  and canonical race detector gate.
 
 ## Contributing
 

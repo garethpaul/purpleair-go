@@ -6,6 +6,7 @@ README="$ROOT_DIR/README.md"
 MAKEFILE="$ROOT_DIR/Makefile"
 GITIGNORE="$ROOT_DIR/.gitignore"
 DOCS_PLANS="$ROOT_DIR/docs/plans"
+WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 
 require_file() {
   path=$1
@@ -31,6 +32,8 @@ for path in \
   "sensor_test.go" \
   "docs/plans/2026-06-08-purpleair-go-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-hosted-go-validation.md" \
+  ".github/workflows/check.yml" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -40,7 +43,7 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   exit 1
 fi
 
-for target in "docs:" "fmt:" "lint:" "vet:" "test:" "build:" "verify:" "check:"; do
+for target in "docs:" "fmt:" "lint:" "vet:" "test:" "race:" "build:" "verify:" "check:"; do
   if ! grep -Fq "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
@@ -52,17 +55,49 @@ if ! grep -Fq "go vet ./..." "$MAKEFILE"; then
   exit 1
 fi
 
-if ! grep -Fq "verify: lint vet test build docs" "$MAKEFILE"; then
-  printf '%s\n' "make verify must include the vet gate." >&2
+if ! grep -Fq "go test -race ./..." "$MAKEFILE"; then
+  printf '%s\n' "Makefile must run go test -race ./... from make race." >&2
   exit 1
 fi
 
-for documented in "go test ./..." "go vet ./..." "make vet" "make check" "scripts/check-baseline.sh"; do
+if ! grep -Fq "verify: lint vet test race build docs" "$MAKEFILE"; then
+  printf '%s\n' "make verify must include the vet and race gates." >&2
+  exit 1
+fi
+
+for documented in "go test ./..." "go test -race ./..." "go vet ./..." "make race" "make vet" "make check" "scripts/check-baseline.sh"; do
   if ! grep -Fq "$documented" "$README"; then
     printf '%s\n' "README must document $documented." >&2
     exit 1
   fi
 done
+
+if ! grep -Fxq 'permissions:' "$WORKFLOW" || ! grep -Fxq '  contents: read' "$WORKFLOW"; then
+  printf '%s\n' "Hosted validation must use read-only repository contents permission." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10' "$WORKFLOW"; then
+  printf '%s\n' "Hosted validation must pin the reviewed actions/checkout v6.0.3 commit." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c' "$WORKFLOW"; then
+  printf '%s\n' "Hosted validation must pin the reviewed actions/setup-go v6.4.0 commit." >&2
+  exit 1
+fi
+
+for version in '1.25.11' '1.26.4'; do
+  if ! grep -Fq "$version" "$WORKFLOW"; then
+    printf '%s\n' "Hosted validation must cover Go $version." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Eq '^[[:space:]]+run: make check$' "$WORKFLOW"; then
+  printf '%s\n' "Hosted validation must run the canonical make check gate." >&2
+  exit 1
+fi
 
 for module_line in \
   "module github.com/garethpaul/purpleair-go" \

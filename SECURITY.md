@@ -34,6 +34,10 @@ Helpful reports include:
 
 For web services, APIs, sockets, or scraping workflows, prioritize reports involving authentication bypass, authorization errors, injection, server-side request forgery, unsafe deserialization, credential leakage, data exposure, or denial-of-service conditions. Use test accounts and minimal proof-of-concept traffic only.
 
+Hosted verification runs formatting, vet, mocked tests, and the race detector
+with read-only repository permissions and pinned actions. Tests do not call the
+live PurpleAir endpoint.
+
 Custom PurpleAir-compatible endpoints should not embed username/password
 credentials in the base URL. `NewClientWithBaseURL` rejects URL userinfo and
 falls back to the default endpoint so secrets are not hidden in endpoint
