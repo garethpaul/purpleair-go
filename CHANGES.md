@@ -6,6 +6,8 @@
 - Added `make race` and wired `go test -race ./...` into the canonical check.
 - Added a `make vet` static analysis gate and wired it into `make verify` and
   `make check`.
+- Added `SensorWithContext` so callers can cancel sensor requests or apply
+  deadlines while preserving wrapped context errors.
 
 ## 2026-06-09
 

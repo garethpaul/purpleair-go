@@ -1,6 +1,7 @@
 package purpleair
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,12 +29,17 @@ func (c *Client) Sensor(sensorId string) *PurpleAir {
 
 // SensorWithError gets sensor data and returns request, response, and parsing errors.
 func (c *Client) SensorWithError(sensorId string) (*PurpleAir, error) {
+	return c.SensorWithContext(context.Background(), sensorId)
+}
+
+// SensorWithContext gets sensor data with caller-controlled cancellation and deadlines.
+func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*PurpleAir, error) {
 	sensorId = strings.TrimSpace(sensorId)
 	if sensorId == "" {
 		return nil, fmt.Errorf("purpleair: sensor id is required")
 	}
 
-	req, err := http.NewRequest(http.MethodGet, c.sensorURL(sensorId), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.sensorURL(sensorId), nil)
 	if err != nil {
 		return nil, err
 	}

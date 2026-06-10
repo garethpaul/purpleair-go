@@ -18,6 +18,7 @@ The current focus is:
 Priority:
 
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
+- Support caller-controlled sensor request cancellation and deadlines
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Maintain module metadata, mocked HTTP tests, `make lint`, `make vet`,

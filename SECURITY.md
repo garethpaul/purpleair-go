@@ -50,6 +50,8 @@ It should also reject nil HTTP responses from custom transports before reading
 status codes or response bodies.
 Transport failures should include PurpleAir-specific request context while
 preserving the underlying Go error for callers that inspect error chains.
+Caller-provided cancellation and deadlines should propagate to sensor HTTP
+requests so applications can stop work before the default client timeout.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 

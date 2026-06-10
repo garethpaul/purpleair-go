@@ -53,6 +53,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
+- Use `SensorWithContext(ctx, sensorID)` when callers need cancellation or a
+  deadline shorter than the client's HTTP timeout.
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
@@ -68,6 +70,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   notes out of endpoint strings.
 - `SensorWithError` wraps transport failures with PurpleAir-specific request
   context while preserving the original Go error.
+- `SensorWithContext` propagates the caller context to the HTTP request and
+  preserves cancellation and deadline errors through that wrapper.
 
 ## Testing and Verification
 
@@ -140,6 +144,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   analysis verification gate.
 - See `docs/plans/2026-06-10-hosted-go-validation.md` for the current-Go matrix
   and canonical race detector gate.
+- See `docs/plans/2026-06-10-sensor-context-cancellation.md` for caller-driven
+  request cancellation and deadline support.
 
 ## Contributing
 

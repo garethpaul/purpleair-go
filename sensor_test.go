@@ -1,6 +1,8 @@
 package purpleair
 
 import (
+	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +42,30 @@ func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	assert.Len(t, sensor.Results, 1)
 	assert.Equal(t, 17937, sensor.Results[0].ID)
 	assert.Equal(t, "Test Sensor", sensor.Results[0].Label)
+}
+
+func TestSensorWithContextPropagatesCancellation(t *testing.T) {
+	type contextKey string
+	const requestMarker contextKey = "request-marker"
+
+	ctx := context.WithValue(context.Background(), requestMarker, "sensor-request")
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			assert.Equal(t, "sensor-request", req.Context().Value(requestMarker))
+			return nil, req.Context().Err()
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(ctx, "17937")
+
+	assert.Nil(t, sensor)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected canceled request error, got %v", err)
+	}
 }
 
 func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
