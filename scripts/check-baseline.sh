@@ -40,14 +40,24 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   exit 1
 fi
 
-for target in "docs:" "fmt:" "lint:" "test:" "build:" "verify:" "check:"; do
+for target in "docs:" "fmt:" "lint:" "vet:" "test:" "build:" "verify:" "check:"; do
   if ! grep -Fq "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
   fi
 done
 
-for documented in "go test ./..." "make check" "scripts/check-baseline.sh"; do
+if ! grep -Fq "go vet ./..." "$MAKEFILE"; then
+  printf '%s\n' "Makefile must run go vet ./... from make vet." >&2
+  exit 1
+fi
+
+if ! grep -Fq "verify: lint vet test build docs" "$MAKEFILE"; then
+  printf '%s\n' "make verify must include the vet gate." >&2
+  exit 1
+fi
+
+for documented in "go test ./..." "go vet ./..." "make vet" "make check" "scripts/check-baseline.sh"; do
   if ! grep -Fq "$documented" "$README"; then
     printf '%s\n' "README must document $documented." >&2
     exit 1

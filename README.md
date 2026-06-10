@@ -72,17 +72,18 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `go test ./...`
 - `make lint`
+- `make vet`
 - `make test`
 - `make build`
 - `make check`
 - `make verify`
 - `scripts/check-baseline.sh`
 
-`make check` delegates to `make verify`, which checks Go formatting, runs the
-full test suite, runs the Go build-through-test gate, and verifies completed
-plans under `docs/plans`. Tests and executable examples use mocked HTTP
-servers and do not call the live PurpleAir endpoint, including response
-validation edge cases.
+`make vet` runs `go vet ./...`. `make check` delegates to `make verify`, which
+checks Go formatting, runs `go vet ./...`, runs the full test suite, runs the
+Go build-through-test gate, and verifies completed plans under `docs/plans`.
+Tests and executable examples use mocked HTTP servers and do not call the live
+PurpleAir endpoint, including response validation edge cases.
 
 The baseline script checks required files, module metadata, completed docs-plan
 metadata, verification documentation, and local secret/editor metadata hygiene.
@@ -129,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `SensorWithError` response body size guard.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and local metadata checks.
+- See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static
+  analysis verification gate.
 
 ## Contributing
 

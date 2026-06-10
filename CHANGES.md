@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Added a `make vet` static analysis gate and wired it into `make verify` and
+  `make check`.
+
 ## 2026-06-09
 
 - Added a sensor response body size guard before JSON parsing.
