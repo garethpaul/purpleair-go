@@ -88,6 +88,12 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 		return nil, fmt.Errorf("purpleair: no results for sensor %q", sensorId)
 	}
 
+	for index, result := range pa.Results {
+		if result.ID <= 0 {
+			return nil, fmt.Errorf("purpleair: result %d has invalid sensor id %d", index, result.ID)
+		}
+	}
+
 	return &pa, nil
 }
 

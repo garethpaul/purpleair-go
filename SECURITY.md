@@ -54,6 +54,8 @@ Caller-provided cancellation and deadlines should propagate to sensor HTTP
 requests so applications can stop work before the default client timeout.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
+Decoded sensor results should reject non-positive sensor IDs so malformed
+upstream records are not returned as valid zero-value sensor data.
 
 ## Dependency and Supply Chain Security
 

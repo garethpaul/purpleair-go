@@ -30,12 +30,38 @@ for path in \
   "results.go" \
   "sensor.go" \
   "sensor_test.go" \
+  "plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md" \
   "docs/plans/2026-06-08-purpleair-go-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
   "docs/plans/2026-06-10-hosted-go-validation.md" \
   ".github/workflows/check.yml" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+if ! grep -Fq "result.ID <= 0" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "result %d has invalid sensor id %d" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "Sensor responses must reject non-positive result IDs." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TestSensorWithErrorRejectsInvalidResultIDs" "$ROOT_DIR/sensor_test.go" ||
+  ! grep -Fq "TestSensorWithErrorAcceptsMultipleValidResultIDs" "$ROOT_DIR/sensor_test.go"; then
+  printf '%s\n' "Sensor tests must cover invalid and multiple valid result IDs." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Sensor Result ID Validation" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md" ||
+  ! grep -Fq "make check" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md"; then
+  printf '%s\n' "Sensor result ID validation plan must document repository verification." >&2
+  exit 1
+fi
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "non-positive sensor IDs" "$document"; then
+    printf '%s\n' "$document must document non-positive sensor ID rejection." >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then

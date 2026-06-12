@@ -58,7 +58,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
-  contain no sensor results.
+  contain no sensor results or results with non-positive sensor IDs.
 - `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.

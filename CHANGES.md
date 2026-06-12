@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Rejected missing or non-positive sensor IDs so malformed upstream records
+  cannot be returned as valid data.
+- Added mocked coverage for invalid identities and multiple positive sensor ID
+  results.
+
 ## 2026-06-10
 
 - Added pinned hosted verification on Go 1.25.11 and Go 1.26.4.

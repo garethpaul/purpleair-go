@@ -36,6 +36,7 @@ Priority:
 - Return explicit errors for nil HTTP responses from custom transports
 - Return explicit errors for empty HTTP response bodies
 - Bound sensor response body reads before JSON parsing
+- Reject non-positive sensor IDs in decoded response records
 - Wrap transport failures with PurpleAir-specific request context
 
 Next priorities:
