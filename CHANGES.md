@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Rejected nil `SensorWithContext` contexts with a stable error before request
+  construction, with no-request regression coverage.
 - Reduced the default total sensor HTTP timeout from five minutes to a
   30-second boundary for constructor, nil, and zero-value clients.
 - Added exact fallback and caller-provided client preservation coverage while

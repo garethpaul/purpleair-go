@@ -49,11 +49,15 @@
 
 - Detected references to PurpleAir. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Keep hosted validation credential-free and no-live-network; do not add live PurpleAir calls or credentialed smoke tests without separate security review.
+- Preserve the nil-context guard and zero-request regression when changing
+  `SensorWithContext` request construction.
 - `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so endpoint configuration does not hide secrets in the base URL.
 - `NewClientWithBaseURL` rejects URL fragments so local-only tokens or notes do not hide in endpoint configuration.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-purpleair-go-baseline.md` for the canonical deterministic client-test baseline.
+- See `docs/plans/2026-06-12-nil-context-guard.md` for the public panic-boundary
+  contract.
 
 ## Agent workflow
 

@@ -39,6 +39,7 @@ for path in \
   "docs/plans/2026-06-10-hosted-go-validation.md" \
   "docs/plans/2026-06-12-default-http-timeout-boundary.md" \
   "docs/plans/2026-06-12-sensor-response-identity.md" \
+  "docs/plans/2026-06-12-nil-context-guard.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -67,6 +68,26 @@ fi
 if ! grep -Fq "TestSensorWithErrorRejectsInvalidResultIDs" "$ROOT_DIR/sensor_test.go" ||
   ! grep -Fq "TestSensorWithErrorAcceptsMultipleValidResultIDs" "$ROOT_DIR/sensor_test.go"; then
   printf '%s\n' "Sensor tests must cover invalid and multiple valid result IDs." >&2
+  exit 1
+fi
+
+if ! grep -Fq "if ctx == nil" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "purpleair: context is required" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "SensorWithContext must reject nil context before request construction." >&2
+  exit 1
+fi
+
+nil_context_line=$(grep -nF "if ctx == nil" "$ROOT_DIR/sensor.go" | cut -d: -f1)
+request_line=$(grep -nF "http.NewRequestWithContext" "$ROOT_DIR/sensor.go" | cut -d: -f1)
+if [ -z "$nil_context_line" ] || [ -z "$request_line" ] || [ "$nil_context_line" -ge "$request_line" ]; then
+  printf '%s\n' "Nil context must be rejected before request construction." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TestSensorWithContextRejectsNilContext" "$ROOT_DIR/sensor_test.go" ||
+  ! grep -Fq "nil context must fail before HTTP requests" "$ROOT_DIR/sensor_test.go" ||
+  ! grep -Fq "sensor id validation must remain before nil context validation" "$ROOT_DIR/sensor_test.go"; then
+  printf '%s\n' "Sensor tests must prove nil context returns an error without HTTP requests." >&2
   exit 1
 fi
 
@@ -145,6 +166,11 @@ for documented in "go test ./..." "go test -race ./..." "go vet ./..." "make rac
     exit 1
   fi
 done
+
+if ! grep -Fq "nil context" "$README"; then
+  printf '%s\n' "README must document the SensorWithContext nil-context error." >&2
+  exit 1
+fi
 
 expected_workflow=$(mktemp)
 trap 'rm -f "$expected_workflow"' EXIT HUP INT TERM
