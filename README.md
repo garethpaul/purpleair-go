@@ -87,6 +87,8 @@ PurpleAir endpoint, including response validation edge cases.
 
 The baseline script checks required files, module metadata, completed docs-plan
 metadata, verification documentation, and local secret/editor metadata hygiene.
+GitHub Actions uses the stable Go toolchain and runs the same no-live-network
+`make check` gate on pushes and pull requests.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -132,6 +134,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   repository baseline guard and local metadata checks.
 - See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static
   analysis verification gate.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
 
 ## Contributing
 

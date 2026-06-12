@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Added a GitHub Actions workflow that uses the stable Go toolchain and runs
+  the local no-live-network `make check` baseline.
 - Added a `make vet` static analysis gate and wired it into `make verify` and
   `make check`.
 

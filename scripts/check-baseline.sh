@@ -16,6 +16,7 @@ require_file() {
 }
 
 for path in \
+  ".github/workflows/check.yml" \
   ".gitignore" \
   "CHANGES.md" \
   "Makefile" \
@@ -31,6 +32,7 @@ for path in \
   "sensor_test.go" \
   "docs/plans/2026-06-08-purpleair-go-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -63,6 +65,18 @@ for documented in "go test ./..." "go vet ./..." "make vet" "make check" "script
     exit 1
   fi
 done
+
+if ! grep -Fq "actions/setup-go@v5" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "go-version: stable" "$ROOT_DIR/.github/workflows/check.yml" ||
+  ! grep -Fq "make check" "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions workflow must set up stable Go and run make check." >&2
+  exit 1
+fi
+
+if ! grep -Fq "GitHub Actions" "$README"; then
+  printf '%s\n' "README must document GitHub Actions." >&2
+  exit 1
+fi
 
 for module_line in \
   "module github.com/garethpaul/purpleair-go" \

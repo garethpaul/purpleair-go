@@ -12,6 +12,7 @@ straightforward sensor lookup workflow.
 Current baseline: `make check` verifies Go formatting, `go vet`, mocked unit
 tests, the Go build-through-test gate, and completed `docs/plans` coverage
 without calling the live PurpleAir endpoint.
+GitHub Actions runs the same no-live-network gate with the stable Go toolchain.
 
 The current focus is:
 
@@ -34,6 +35,7 @@ Priority:
 - Return explicit errors for empty HTTP response bodies
 - Bound sensor response body reads before JSON parsing
 - Wrap transport failures with PurpleAir-specific request context
+- Keep GitHub Actions aligned with the mocked `make check` baseline
 
 Next priorities:
 

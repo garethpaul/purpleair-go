@@ -48,6 +48,9 @@ Transport failures should include PurpleAir-specific request context while
 preserving the underlying Go error for callers that inspect error chains.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
+GitHub Actions runs the same no-live-network `make check` gate as local
+development. Do not add live PurpleAir calls or credentialed smoke tests to the
+workflow without a separate security review.
 
 ## Dependency and Supply Chain Security
 
