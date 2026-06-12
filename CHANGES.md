@@ -10,6 +10,8 @@
   cannot be returned as valid data.
 - Added mocked coverage for invalid identities and multiple positive sensor ID
   results.
+- Required positive decimal request IDs and rejected responses that do not
+  preserve the requested sensor identity in at least one result.
 
 ## 2026-06-10
 

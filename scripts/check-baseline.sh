@@ -38,6 +38,7 @@ for path in \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-hosted-go-validation.md" \
   "docs/plans/2026-06-12-default-http-timeout-boundary.md" \
+  "docs/plans/2026-06-12-sensor-response-identity.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -69,6 +70,28 @@ if ! grep -Fq "TestSensorWithErrorRejectsInvalidResultIDs" "$ROOT_DIR/sensor_tes
   exit 1
 fi
 
+if ! grep -Fq "strconv.Atoi(sensorId)" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "sensor id must be a positive integer" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "response does not include requested sensor" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "Sensor requests and responses must preserve requested sensor identity." >&2
+  exit 1
+fi
+
+for test_name in \
+  "TestSensorWithErrorRejectsInvalidRequestedSensorIDs" \
+  "TestSensorWithErrorRejectsMismatchedResponseSensorIDs" \
+  "TestSensorWithErrorAcceptsMultipleValidResultIDs"; do
+  if ! grep -Fq "$test_name" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Sensor tests must preserve $test_name." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "invalid sensor IDs must fail before HTTP requests" "$ROOT_DIR/sensor_test.go"; then
+  printf '%s\n' "Invalid sensor ID tests must prove no HTTP request is made." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Sensor Result ID Validation" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md" ||
   ! grep -Fq "make check" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md"; then
   printf '%s\n' "Sensor result ID validation plan must document repository verification." >&2
@@ -78,6 +101,13 @@ fi
 for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
   if ! grep -Fq "non-positive sensor IDs" "$document"; then
     printf '%s\n' "$document must document non-positive sensor ID rejection." >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "requested sensor identity" "$document"; then
+    printf '%s\n' "$document must document requested sensor identity validation." >&2
     exit 1
   fi
 done

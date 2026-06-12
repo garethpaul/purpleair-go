@@ -58,7 +58,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
-  contain no sensor results or results with non-positive sensor IDs.
+  contain no sensor results or results with non-positive sensor IDs. Sensor IDs
+  must be positive decimal integers, and each response must preserve the
+  requested sensor identity in at least one result.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
   timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
   when a caller needs a different deadline.
@@ -128,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   sensor ID and timeout guard baseline.
 - See `docs/plans/2026-06-12-default-http-timeout-boundary.md` for the bounded
   30-second default and caller override contract.
+- See `docs/plans/2026-06-12-sensor-response-identity.md` for positive request
+  IDs and requested sensor identity validation.
 - See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
   `SensorWithError` examples baseline.
 - See `docs/plans/2026-06-09-custom-base-url-client.md` for the custom endpoint

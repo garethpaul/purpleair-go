@@ -41,6 +41,7 @@ Priority:
 - Return explicit errors for empty HTTP response bodies
 - Bound sensor response body reads before JSON parsing
 - Reject non-positive sensor IDs in decoded response records
+- Preserve the requested sensor identity in decoded response records
 - Wrap transport failures with PurpleAir-specific request context
 - Keep GitHub Actions aligned with the mocked `make check` baseline
 

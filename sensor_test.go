@@ -179,10 +179,10 @@ func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
 	client.baseURL = server.URL + "/json"
 	client.HTTPClient = server.Client()
 
-	sensor, err := client.SensorWithError("missing")
+	sensor, err := client.SensorWithError("17937")
 
 	assert.Nil(t, sensor)
-	if err == nil || !strings.Contains(err.Error(), `no results for sensor "missing"`) {
+	if err == nil || !strings.Contains(err.Error(), `no results for sensor "17937"`) {
 		t.Fatalf("expected no-results error, got %v", err)
 	}
 }
@@ -222,7 +222,7 @@ func TestSensorWithErrorRejectsInvalidResultIDs(t *testing.T) {
 func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17937},{"ID":17938}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17937}]}`))
 	}))
 	defer server.Close()
 
@@ -234,4 +234,41 @@ func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, sensor.Results, 2)
+	assert.Equal(t, 17937, sensor.Results[1].ID)
+}
+
+func TestSensorWithErrorRejectsInvalidRequestedSensorIDs(t *testing.T) {
+	client := NewClient()
+	requests := 0
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			requests++
+			return nil, errors.New("unexpected request")
+		}),
+	}
+
+	for _, sensorID := range []string{"0", "-1", "1.5", "sensor"} {
+		sensor, err := client.SensorWithError(sensorID)
+
+		assert.Nil(t, sensor)
+		assert.EqualError(t, err, "purpleair: sensor id must be a positive integer")
+	}
+
+	assert.Equal(t, 0, requests, "invalid sensor IDs must fail before HTTP requests")
+}
+
+func TestSensorWithErrorRejectsMismatchedResponseSensorIDs(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17939}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json")
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: response does not include requested sensor 17937")
 }
