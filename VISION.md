@@ -21,6 +21,7 @@ Priority:
 
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
 - Support caller-controlled sensor request cancellation and deadlines
+- Reject nil caller contexts with an error instead of a process panic
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Keep the default total HTTP timeout at a 30-second boundary while preserving

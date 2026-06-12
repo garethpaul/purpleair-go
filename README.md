@@ -76,6 +76,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   context while preserving the original Go error.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
+- `SensorWithContext` returns `purpleair: context is required` for a nil context
+  instead of allowing Go's request constructor to panic.
 
 ## Testing and Verification
 
@@ -157,6 +159,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   and canonical race detector gate.
 - See `docs/plans/2026-06-10-sensor-context-cancellation.md` for caller-driven
   request cancellation and deadline support.
+- See `docs/plans/2026-06-12-nil-context-guard.md` for the public nil-context
+  panic boundary and network-free regression.
 
 ## Contributing
 

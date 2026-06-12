@@ -69,6 +69,29 @@ func TestSensorWithContextPropagatesCancellation(t *testing.T) {
 	}
 }
 
+func TestSensorWithContextRejectsNilContext(t *testing.T) {
+	requests := 0
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			requests++
+			return nil, fmt.Errorf("nil context must fail before HTTP requests")
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(nil, "17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: context is required")
+	assert.Equal(t, 0, requests, "nil context must fail before HTTP requests")
+
+	sensor, err = client.SensorWithContext(nil, "not-a-sensor-id")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: sensor id must be a positive integer")
+	assert.Equal(t, 0, requests, "sensor id validation must remain before nil context validation")
+}
+
 func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
 	client := NewClient()
 
