@@ -21,6 +21,8 @@ Priority:
 - Support caller-controlled sensor request cancellation and deadlines
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
+- Keep the default total HTTP timeout at a 30-second boundary while preserving
+  custom clients and caller-controlled context deadlines
 - Maintain module metadata, mocked HTTP tests, `make lint`, `make vet`,
   `make race`, `make build`, and `make check`
 - Run the canonical gate on current supported Go patch releases in hosted CI

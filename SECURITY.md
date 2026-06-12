@@ -52,6 +52,9 @@ Transport failures should include PurpleAir-specific request context while
 preserving the underlying Go error for callers that inspect error chains.
 Caller-provided cancellation and deadlines should propagate to sensor HTTP
 requests so applications can stop work before the default client timeout.
+The default client uses a 30-second timeout for constructor, nil, and zero-value
+clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
+without the package replacing their policy.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 Decoded sensor results should reject non-positive sensor IDs so malformed

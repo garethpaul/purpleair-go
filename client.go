@@ -9,7 +9,7 @@ import (
 
 const (
 	defaultBaseURL     = "https://www.purpleair.com/json"
-	defaultHTTPTimeout = 5 * time.Minute
+	defaultHTTPTimeout = 30 * time.Second
 )
 
 // Client .

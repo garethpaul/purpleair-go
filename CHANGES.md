@@ -2,6 +2,10 @@
 
 ## 2026-06-12
 
+- Reduced the default total sensor HTTP timeout from five minutes to a
+  30-second boundary for constructor, nil, and zero-value clients.
+- Added exact fallback and caller-provided client preservation coverage while
+  retaining `SensorWithContext` deadline overrides.
 - Rejected missing or non-positive sensor IDs so malformed upstream records
   cannot be returned as valid data.
 - Added mocked coverage for invalid identities and multiple positive sensor ID

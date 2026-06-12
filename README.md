@@ -59,7 +59,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
   contain no sensor results or results with non-positive sensor IDs.
-- `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
+- `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
+  timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
+  when a caller needs a different deadline.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
 - Custom base URLs must be absolute `http` or `https` URLs with a host; invalid
@@ -122,6 +124,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   deterministic client-test baseline.
 - See `docs/plans/2026-06-08-client-input-and-timeout-guards.md` for the
   sensor ID and timeout guard baseline.
+- See `docs/plans/2026-06-12-default-http-timeout-boundary.md` for the bounded
+  30-second default and caller override contract.
 - See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
   `SensorWithError` examples baseline.
 - See `docs/plans/2026-06-09-custom-base-url-client.md` for the custom endpoint

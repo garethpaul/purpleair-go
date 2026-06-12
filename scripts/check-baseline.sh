@@ -34,9 +34,25 @@ for path in \
   "docs/plans/2026-06-08-purpleair-go-baseline.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
   "docs/plans/2026-06-10-hosted-go-validation.md" \
+  "docs/plans/2026-06-12-default-http-timeout-boundary.md" \
   ".github/workflows/check.yml" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+if ! grep -Fq "defaultHTTPTimeout = 30 * time.Second" "$ROOT_DIR/client.go" ||
+  ! grep -Fq "TestZeroValueClientUsesDefaultTimeout" "$ROOT_DIR/client_test.go" ||
+  ! grep -Fq "TestNilClientUsesDefaultTimeout" "$ROOT_DIR/client_test.go" ||
+  ! grep -Fq "TestClientPreservesCallerProvidedHTTPTimeout" "$ROOT_DIR/client_test.go"; then
+  printf '%s\n' "Client timeout tests must preserve the 30-second default and caller overrides." >&2
+  exit 1
+fi
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "30-second" "$document"; then
+    printf '%s\n' "$document must document the 30-second default HTTP timeout." >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq "result.ID <= 0" "$ROOT_DIR/sensor.go" ||
