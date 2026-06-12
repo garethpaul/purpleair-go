@@ -57,8 +57,14 @@ clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
 without the package replacing their policy.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
+GitHub Actions runs the same no-live-network `make check` gate as local
+development with read-only permissions, pinned actions, and checkout credential
+persistence disabled. Do not add live PurpleAir calls or credentialed smoke
+tests to the workflow without a separate security review.
 Decoded sensor results should reject non-positive sensor IDs so malformed
 upstream records are not returned as valid zero-value sensor data.
+Responses must preserve the requested sensor identity in at least one positive
+result so proxied, stale, or malformed data is not attributed to another sensor.
 
 ## Dependency and Supply Chain Security
 

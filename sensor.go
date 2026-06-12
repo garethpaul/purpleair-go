@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +38,10 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 	sensorId = strings.TrimSpace(sensorId)
 	if sensorId == "" {
 		return nil, fmt.Errorf("purpleair: sensor id is required")
+	}
+	requestedSensorID, parseErr := strconv.Atoi(sensorId)
+	if parseErr != nil || requestedSensorID <= 0 {
+		return nil, fmt.Errorf("purpleair: sensor id must be a positive integer")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.sensorURL(sensorId), nil)
@@ -88,10 +93,18 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 		return nil, fmt.Errorf("purpleair: no results for sensor %q", sensorId)
 	}
 
+	matchedRequestedSensor := false
 	for index, result := range pa.Results {
 		if result.ID <= 0 {
 			return nil, fmt.Errorf("purpleair: result %d has invalid sensor id %d", index, result.ID)
 		}
+		if result.ID == requestedSensorID {
+			matchedRequestedSensor = true
+		}
+	}
+
+	if !matchedRequestedSensor {
+		return nil, fmt.Errorf("purpleair: response does not include requested sensor %d", requestedSensorID)
 	}
 
 	return &pa, nil
