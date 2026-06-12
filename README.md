@@ -14,6 +14,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `README.md` - project overview and local usage notes
 - `CHANGES.md` - notable maintenance changes
 - `Makefile` - local verification entry points
+- `.github/workflows/check.yml` - hosted current-Go verification matrix
 - `go.mod`
 - `go.sum`
 - `docs/plans` - canonical completed maintenance plans
@@ -52,11 +53,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
+- Use `SensorWithContext(ctx, sensorID)` when callers need cancellation or a
+  deadline shorter than the client's HTTP timeout.
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
-  contain no sensor results.
-- `NewClient()` and zero-value clients use a five-minute HTTP timeout by default.
+  contain no sensor results or results with non-positive sensor IDs.
+- `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
+  timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
+  when a caller needs a different deadline.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
 - Custom base URLs must be absolute `http` or `https` URLs with a host; invalid
@@ -67,11 +72,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   notes out of endpoint strings.
 - `SensorWithError` wraps transport failures with PurpleAir-specific request
   context while preserving the original Go error.
+- `SensorWithContext` propagates the caller context to the HTTP request and
+  preserves cancellation and deadline errors through that wrapper.
 
 ## Testing and Verification
 
 - `go test ./...`
+- `go test -race ./...`
 - `make lint`
+- `make race`
 - `make vet`
 - `make test`
 - `make build`
@@ -79,16 +88,19 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make verify`
 - `scripts/check-baseline.sh`
 
-`make vet` runs `go vet ./...`. `make check` delegates to `make verify`, which
-checks Go formatting, runs `go vet ./...`, runs the full test suite, runs the
-Go build-through-test gate, and verifies completed plans under `docs/plans`.
+`make vet` runs `go vet ./...`, and `make race` runs `go test -race ./...`.
+`make check` delegates to `make verify`, which checks Go formatting, vet, unit
+and race tests, the Go build-through-test gate, and completed plans under
+`docs/plans`.
 Tests and executable examples use mocked HTTP servers and do not call the live
 PurpleAir endpoint, including response validation edge cases.
+GitHub Actions runs the same gate on Go 1.25.11 and Go 1.26.4 with read-only
+permissions and pinned actions.
 
 The baseline script checks required files, module metadata, completed docs-plan
 metadata, verification documentation, and local secret/editor metadata hygiene.
-GitHub Actions uses the stable Go toolchain and runs the same no-live-network
-`make check` gate on pushes and pull requests.
+GitHub Actions runs the same no-live-network `make check` gate on pushes, pull
+requests, and manual dispatches without persisting checkout credentials.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -114,6 +126,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   deterministic client-test baseline.
 - See `docs/plans/2026-06-08-client-input-and-timeout-guards.md` for the
   sensor ID and timeout guard baseline.
+- See `docs/plans/2026-06-12-default-http-timeout-boundary.md` for the bounded
+  30-second default and caller override contract.
 - See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
   `SensorWithError` examples baseline.
 - See `docs/plans/2026-06-09-custom-base-url-client.md` for the custom endpoint
@@ -135,6 +149,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static
   analysis verification gate.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
+- See `docs/plans/2026-06-10-hosted-go-validation.md` for the current-Go matrix
+  and canonical race detector gate.
+- See `docs/plans/2026-06-10-sensor-context-cancellation.md` for caller-driven
+  request cancellation and deadline support.
 
 ## Contributing
 

@@ -34,6 +34,10 @@ Helpful reports include:
 
 For web services, APIs, sockets, or scraping workflows, prioritize reports involving authentication bypass, authorization errors, injection, server-side request forgery, unsafe deserialization, credential leakage, data exposure, or denial-of-service conditions. Use test accounts and minimal proof-of-concept traffic only.
 
+Hosted verification runs formatting, vet, mocked tests, and the race detector
+with read-only repository permissions and pinned actions. Tests do not call the
+live PurpleAir endpoint.
+
 Custom PurpleAir-compatible endpoints should not embed username/password
 credentials in the base URL. `NewClientWithBaseURL` rejects URL userinfo and
 falls back to the default endpoint so secrets are not hidden in endpoint
@@ -46,11 +50,19 @@ It should also reject nil HTTP responses from custom transports before reading
 status codes or response bodies.
 Transport failures should include PurpleAir-specific request context while
 preserving the underlying Go error for callers that inspect error chains.
+Caller-provided cancellation and deadlines should propagate to sensor HTTP
+requests so applications can stop work before the default client timeout.
+The default client uses a 30-second timeout for constructor, nil, and zero-value
+clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
+without the package replacing their policy.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 GitHub Actions runs the same no-live-network `make check` gate as local
-development. Do not add live PurpleAir calls or credentialed smoke tests to the
-workflow without a separate security review.
+development with read-only permissions, pinned actions, and checkout credential
+persistence disabled. Do not add live PurpleAir calls or credentialed smoke
+tests to the workflow without a separate security review.
+Decoded sensor results should reject non-positive sensor IDs so malformed
+upstream records are not returned as valid zero-value sensor data.
 
 ## Dependency and Supply Chain Security
 

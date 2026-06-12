@@ -1,6 +1,7 @@
 package purpleair
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -12,14 +13,14 @@ func TestClient(t *testing.T) {
 	client := NewClient()
 
 	assert.Equal(t, "https://www.purpleair.com/json", client.baseURL, "error with client")
-	assert.Equal(t, 5*time.Minute, client.HTTPClient.Timeout, "error with client timeout")
+	assert.Equal(t, 30*time.Second, client.HTTPClient.Timeout, "error with client timeout")
 }
 
 func TestNewClientWithBaseURL(t *testing.T) {
 	client := NewClientWithBaseURL(" https://example.test/json?api_key=local ")
 
 	assert.Equal(t, "https://example.test/json?api_key=local", client.baseURL)
-	assert.Equal(t, 5*time.Minute, client.HTTPClient.Timeout)
+	assert.Equal(t, 30*time.Second, client.HTTPClient.Timeout)
 	assert.Equal(t, "https://example.test/json?api_key=local&show=17937", client.sensorURL("17937"))
 }
 
@@ -44,13 +45,22 @@ func TestNewClientWithBaseURLFallsBackForInvalidValues(t *testing.T) {
 func TestZeroValueClientUsesDefaultTimeout(t *testing.T) {
 	client := Client{}
 
-	assert.Equal(t, 5*time.Minute, client.httpClient().Timeout)
+	assert.Equal(t, 30*time.Second, client.httpClient().Timeout)
 	assert.Equal(t, "https://www.purpleair.com/json?show=17937", client.sensorURL("17937"))
 }
 
 func TestNilClientUsesDefaultTimeout(t *testing.T) {
 	var client *Client
 
-	assert.Equal(t, 5*time.Minute, client.httpClient().Timeout)
+	assert.Equal(t, 30*time.Second, client.httpClient().Timeout)
 	assert.Equal(t, "https://www.purpleair.com/json?show=17937", client.sensorURL("17937"))
+}
+
+func TestClientPreservesCallerProvidedHTTPTimeout(t *testing.T) {
+	customHTTPClient := &http.Client{Timeout: 2 * time.Minute}
+	client := NewClient()
+	client.HTTPClient = customHTTPClient
+
+	assert.Same(t, customHTTPClient, client.httpClient())
+	assert.Equal(t, 2*time.Minute, client.httpClient().Timeout)
 }

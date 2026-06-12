@@ -1,6 +1,9 @@
 package purpleair
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +43,30 @@ func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	assert.Len(t, sensor.Results, 1)
 	assert.Equal(t, 17937, sensor.Results[0].ID)
 	assert.Equal(t, "Test Sensor", sensor.Results[0].Label)
+}
+
+func TestSensorWithContextPropagatesCancellation(t *testing.T) {
+	type contextKey string
+	const requestMarker contextKey = "request-marker"
+
+	ctx := context.WithValue(context.Background(), requestMarker, "sensor-request")
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			assert.Equal(t, "sensor-request", req.Context().Value(requestMarker))
+			return nil, req.Context().Err()
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(ctx, "17937")
+
+	assert.Nil(t, sensor)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected canceled request error, got %v", err)
+	}
 }
 
 func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
@@ -158,4 +185,53 @@ func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), `no results for sensor "missing"`) {
 		t.Fatalf("expected no-results error, got %v", err)
 	}
+}
+
+func TestSensorWithErrorRejectsInvalidResultIDs(t *testing.T) {
+	for name, testCase := range map[string]struct {
+		payload       string
+		expectedIndex int
+	}{
+		"missing":      {`{"results":[{"Label":"Missing ID"}]}`, 0},
+		"zero":         {`{"results":[{"ID":0,"Label":"Zero ID"}]}`, 0},
+		"negative":     {`{"results":[{"ID":-1,"Label":"Negative ID"}]}`, 0},
+		"later result": {`{"results":[{"ID":17937},{"ID":0}]}`, 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(testCase.payload))
+			}))
+			defer server.Close()
+
+			client := NewClient()
+			client.baseURL = server.URL + "/json"
+			client.HTTPClient = server.Client()
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.Nil(t, sensor)
+			expectedError := fmt.Sprintf("result %d has invalid sensor id", testCase.expectedIndex)
+			if err == nil || !strings.Contains(err.Error(), expectedError) {
+				t.Fatalf("expected invalid result sensor id error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937},{"ID":17938}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClient()
+	client.baseURL = server.URL + "/json"
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.Len(t, sensor.Results, 2)
 }

@@ -21,6 +21,7 @@
 - Tests: `make test`
 - Build: `make build`
 - Go test all packages: `go test ./...`
+- Go race test all packages: `go test -race ./...`
 - Go vet all packages: `go vet ./...`
 - Go build all packages: `go build ./...`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
@@ -47,6 +48,7 @@
 ## Safety and gotchas
 
 - Detected references to PurpleAir. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- Keep hosted validation credential-free and no-live-network; do not add live PurpleAir calls or credentialed smoke tests without separate security review.
 - `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so endpoint configuration does not hide secrets in the base URL.
 - `NewClientWithBaseURL` rejects URL fragments so local-only tokens or notes do not hide in endpoint configuration.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

@@ -11,9 +11,12 @@ hosted CI that repeats that same no-live-network gate.
 ## Changes
 
 - Added `.github/workflows/check.yml` for GitHub Actions.
-- Used `actions/setup-go` with the stable Go toolchain.
+- Used pinned checkout and Go setup actions with a Go 1.25.11 and Go 1.26.4
+  matrix, read-only repository permissions, and no persisted checkout
+  credentials.
 - Ran `make check` in the hosted workflow.
-- Extended the baseline script and docs so hosted CI stays visible.
+- Extended the baseline script and docs so the exact hosted CI contract stays
+  visible and mutation-resistant.
 
 ## Verification
 

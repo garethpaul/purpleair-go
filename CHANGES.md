@@ -1,11 +1,25 @@
 # Changes
 
+## 2026-06-12
+
+- Reduced the default total sensor HTTP timeout from five minutes to a
+  30-second boundary for constructor, nil, and zero-value clients.
+- Added exact fallback and caller-provided client preservation coverage while
+  retaining `SensorWithContext` deadline overrides.
+- Rejected missing or non-positive sensor IDs so malformed upstream records
+  cannot be returned as valid data.
+- Added mocked coverage for invalid identities and multiple positive sensor ID
+  results.
+
 ## 2026-06-10
 
-- Added a GitHub Actions workflow that uses the stable Go toolchain and runs
-  the local no-live-network `make check` baseline.
+- Added credential-free, pinned hosted verification on Go 1.25.11 and Go
+  1.26.4 that runs the local no-live-network `make check` baseline.
+- Added `make race` and wired `go test -race ./...` into the canonical check.
 - Added a `make vet` static analysis gate and wired it into `make verify` and
   `make check`.
+- Added `SensorWithContext` so callers can cancel sensor requests or apply
+  deadlines while preserving wrapped context errors.
 
 ## 2026-06-09
 
