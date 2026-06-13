@@ -57,6 +57,9 @@ clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
 without the package replacing their policy.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
+Responses with a declared Content-Length above the limit are rejected before
+the first body read, while every accepted or unknown declaration still passes
+through the bounded read path.
 Response read and JSON decode failures retain PurpleAir-specific context and
 their underlying Go errors, and all non-nil response bodies are closed across
 success and failure paths to preserve connection reuse.

@@ -7,6 +7,8 @@
   `errors.As`.
 - Added deterministic coverage proving all non-nil response bodies are closed
   across status, read, size, blank, decode, validation, and success paths.
+- Rejected an oversized declared Content-Length before the first response body
+  read while preserving the bounded fallback for absent or inaccurate lengths.
 
 ## 2026-06-12
 

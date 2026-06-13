@@ -1,6 +1,6 @@
 # Reject Declared Oversized Responses Before Reading
 
-Status: Pending
+Status: Completed
 
 ## Context
 
@@ -40,8 +40,24 @@ the same limit first.
 
 ## Work Completed
 
-Pending implementation.
+- Added a success-response preflight that rejects a declared `Content-Length`
+  above `maxSensorResponseBytes` before reading the response body.
+- Preserved status handling, deferred body closure, and the bounded read path
+  for unknown, absent, accepted, or misleading declarations.
+- Added reader-sensitive tests for zero-read oversized rejection and the exact
+  accepted boundary.
+- Added scripted contracts and synchronized README, security, vision, and
+  change-log guidance.
 
 ## Verification Results
 
-Pending implementation and validation.
+- Focused preflight, exact-boundary, fallback oversized-body, and body-close
+  tests passed.
+- Canonical `make check` passed locally and on Go 1.25.11 and Go 1.26.4 in
+  network-disabled, read-only source containers.
+- Eight hostile mutations were rejected across the comparison boundary,
+  preflight removal, zero-read assertion, body closure, unknown-length
+  fallback, documentation contract, completed status, and exact evidence.
+- `go mod verify` and `git diff --check` passed; exact-base protected-file,
+  secret, captured-prompt, and generated-artifact scans found no changes or
+  findings outside the intended paths.

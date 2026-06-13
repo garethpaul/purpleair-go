@@ -40,8 +40,51 @@ for path in \
   "docs/plans/2026-06-12-default-http-timeout-boundary.md" \
   "docs/plans/2026-06-12-sensor-response-identity.md" \
   "docs/plans/2026-06-13-response-error-context-and-body-close.md" \
+  "docs/plans/2026-06-13-response-content-length-preflight.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+if ! grep -Fq "res.ContentLength > maxSensorResponseBytes" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "Sensor responses must reject oversized declared Content-Length values before reading." >&2
+  exit 1
+fi
+
+for test_contract in \
+  "TestSensorWithErrorRejectsDeclaredOversizedBodiesBeforeReading" \
+  "ContentLength: maxSensorResponseBytes + 1" \
+  "assert.Equal(t, 0, reader.reads)" \
+  '"declared oversized body must close without reading"' \
+  "TestSensorWithErrorReadsBodiesDeclaredAtLimit" \
+  "ContentLength: maxSensorResponseBytes" \
+  "assert.Greater(t, reader.reads, 0)" \
+  '"declared exact-limit body must close after reading"' \
+  "ContentLength: -1"; do
+  if ! grep -Fq "$test_contract" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Declared response length tests must preserve: $test_contract" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "declared Content-Length" "$document"; then
+    printf '%s\n' "$document must document declared Content-Length preflight rejection." >&2
+    exit 1
+  fi
+done
+
+for evidence in \
+  "Go 1.25.11" \
+  "Go 1.26.4" \
+  'Canonical `make check` passed' \
+  "Eight hostile mutations were rejected" \
+  '`go mod verify`' \
+  '`git diff --check`' \
+  "secret, captured-prompt, and generated-artifact scans"; do
+  if ! grep -Fq "$evidence" "$ROOT_DIR/docs/plans/2026-06-13-response-content-length-preflight.md"; then
+    printf '%s\n' "Response Content-Length preflight plan must preserve verification evidence: $evidence" >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq 'purpleair: read response body: %w' "$ROOT_DIR/sensor.go" ||
