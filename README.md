@@ -74,6 +74,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   notes out of endpoint strings.
 - `SensorWithError` wraps transport failures with PurpleAir-specific request
   context while preserving the original Go error.
+- Response read and JSON decode failures include PurpleAir-specific phase
+  context while preserving `errors.Is` and `errors.As`; all non-nil HTTP
+  response bodies are closed on successful and failed lookups.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
 
@@ -148,6 +151,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   context, nil-response handling, and repository gate aliases.
 - See `docs/plans/2026-06-09-response-body-size-guard.md` for the
   `SensorWithError` response body size guard.
+- See `docs/plans/2026-06-13-response-error-context-and-body-close.md` for
+  wrapped response-phase errors and response body lifecycle contracts.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and local metadata checks.
 - See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static

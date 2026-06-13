@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-13
+
+- Wrapped response read and JSON decode failures with PurpleAir-specific phase
+  context while preserving underlying Go errors for `errors.Is` and
+  `errors.As`.
+- Added deterministic coverage proving all non-nil response bodies are closed
+  across status, read, size, blank, decode, validation, and success paths.
+
 ## 2026-06-12
 
 - Reduced the default total sensor HTTP timeout from five minutes to a

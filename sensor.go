@@ -72,7 +72,7 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 
 	body, readErr := ioutil.ReadAll(io.LimitReader(res.Body, maxSensorResponseBytes+1))
 	if readErr != nil {
-		return nil, readErr
+		return nil, fmt.Errorf("purpleair: read response body: %w", readErr)
 	}
 
 	if len(body) > maxSensorResponseBytes {
@@ -86,7 +86,7 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 	var pa PurpleAir
 
 	if err := json.Unmarshal(body, &pa); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("purpleair: decode response body: %w", err)
 	}
 
 	if len(pa.Results) == 0 {

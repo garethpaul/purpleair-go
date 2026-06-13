@@ -1,13 +1,13 @@
 ---
 title: Response Error Context and Body Close Contracts
 type: fix
-status: planned
+status: completed
 date: 2026-06-13
 ---
 
 # Response Error Context and Body Close Contracts
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -117,6 +117,35 @@ Requirements:
 - `go test -race ./...`
 - `go vet ./...`
 - `go test -cover ./...`
+- `make lint`
+- `make test`
+- `make race`
+- `make vet`
+- `make build`
+- `make verify`
+- `make check`
+- `go mod verify`
+- `git diff --check`
+
+## Work Completed
+
+- Added stable PurpleAir phase context to response-body read and JSON decode
+  failures while preserving the underlying errors with `%w`.
+- Added deterministic regression tests for `errors.Is`, `errors.As`, and body
+  closure across status, read, size, blank, decode, validation, and success
+  paths.
+- Extended the fail-closed baseline and public documentation with the new
+  error and lifecycle contracts.
+
+## Verification Results
+
+Completed locally with Go 1.25.3 on 2026-06-13:
+
+- `gofmt -w sensor.go sensor_test.go`
+- `go test ./...`
+- `go test -race ./...`
+- `go vet ./...`
+- `go test -cover ./...` (88.6% statement coverage)
 - `make lint`
 - `make test`
 - `make race`
