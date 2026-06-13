@@ -70,6 +70,10 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 		return nil, fmt.Errorf("purpleair: unexpected status %d", res.StatusCode)
 	}
 
+	if res.ContentLength > maxSensorResponseBytes {
+		return nil, fmt.Errorf("purpleair: response body exceeds %d bytes", maxSensorResponseBytes)
+	}
+
 	body, readErr := ioutil.ReadAll(io.LimitReader(res.Body, maxSensorResponseBytes+1))
 	if readErr != nil {
 		return nil, fmt.Errorf("purpleair: read response body: %w", readErr)

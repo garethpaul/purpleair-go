@@ -39,6 +39,16 @@ func (reader failingReader) Read([]byte) (int, error) {
 	return 0, reader.err
 }
 
+type countingReader struct {
+	reader io.Reader
+	reads  int
+}
+
+func (reader *countingReader) Read(buffer []byte) (int, error) {
+	reader.reads++
+	return reader.reader.Read(buffer)
+}
+
 func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -124,8 +134,9 @@ func TestSensorWithErrorRejectsOversizedResponseBodies(t *testing.T) {
 	client.HTTPClient = &http.Client{
 		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader(strings.Repeat(" ", maxSensorResponseBytes+1))),
+				StatusCode:    http.StatusOK,
+				ContentLength: -1,
+				Body:          ioutil.NopCloser(strings.NewReader(strings.Repeat(" ", maxSensorResponseBytes+1))),
 			}, nil
 		}),
 	}
@@ -291,6 +302,50 @@ func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
 			assert.Contains(t, err.Error(), testCase.expectedError)
 		})
 	}
+}
+
+func TestSensorWithErrorRejectsDeclaredOversizedBodiesBeforeReading(t *testing.T) {
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	body := &trackingReadCloser{Reader: reader}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: maxSensorResponseBytes + 1,
+				Body:          body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, fmt.Sprintf("purpleair: response body exceeds %d bytes", maxSensorResponseBytes))
+	assert.Equal(t, 0, reader.reads)
+	assert.True(t, body.closed, "declared oversized body must close without reading")
+}
+
+func TestSensorWithErrorReadsBodiesDeclaredAtLimit(t *testing.T) {
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	body := &trackingReadCloser{Reader: reader}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: maxSensorResponseBytes,
+				Body:          body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, sensor)
+	assert.Greater(t, reader.reads, 0)
+	assert.True(t, body.closed, "declared exact-limit body must close after reading")
 }
 
 func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {

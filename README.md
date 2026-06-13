@@ -77,6 +77,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Response read and JSON decode failures include PurpleAir-specific phase
   context while preserving `errors.Is` and `errors.As`; all non-nil HTTP
   response bodies are closed on successful and failed lookups.
+- Responses with a declared Content-Length above 1 MiB are rejected before the
+  first body read; unknown, absent, and misleading lengths remain protected by
+  the bounded read path.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
 
