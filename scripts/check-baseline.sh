@@ -39,8 +39,28 @@ for path in \
   "docs/plans/2026-06-10-hosted-go-validation.md" \
   "docs/plans/2026-06-12-default-http-timeout-boundary.md" \
   "docs/plans/2026-06-12-sensor-response-identity.md" \
+  "docs/plans/2026-06-13-response-error-context-and-body-close.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+if ! grep -Fq 'purpleair: read response body: %w' "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq 'purpleair: decode response body: %w' "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "Sensor response read and decode failures must preserve wrapped PurpleAir context." >&2
+  exit 1
+fi
+
+for test_contract in \
+  "TestSensorWithErrorWrapsResponseReadErrors" \
+  "TestSensorWithErrorWrapsJSONDecodeErrors" \
+  "TestSensorWithErrorClosesResponseBodies" \
+  "errors.Is(err, readErr)" \
+  "errors.As(err, &syntaxErr)" \
+  "assert.True(t, body.closed)"; do
+  if ! grep -Fq "$test_contract" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Sensor response lifecycle tests must preserve: $test_contract" >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq "defaultHTTPTimeout = 30 * time.Second" "$ROOT_DIR/client.go" ||
@@ -54,6 +74,13 @@ fi
 for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
   if ! grep -Fq "30-second" "$document"; then
     printf '%s\n' "$document must document the 30-second default HTTP timeout." >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "response bodies are closed" "$document"; then
+    printf '%s\n' "$document must document that response bodies are closed." >&2
     exit 1
   fi
 done

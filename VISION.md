@@ -43,6 +43,8 @@ Priority:
 - Reject non-positive sensor IDs in decoded response records
 - Preserve the requested sensor identity in decoded response records
 - Wrap transport failures with PurpleAir-specific request context
+- Wrap response read and decode failures with inspectable PurpleAir context;
+  all non-nil response bodies are closed across success and failure paths
 - Keep GitHub Actions aligned with the mocked `make check` baseline
 
 Next priorities:

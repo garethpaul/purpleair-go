@@ -57,6 +57,9 @@ clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
 without the package replacing their policy.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
+Response read and JSON decode failures retain PurpleAir-specific context and
+their underlying Go errors, and all non-nil response bodies are closed across
+success and failure paths to preserve connection reuse.
 GitHub Actions runs the same no-live-network `make check` gate as local
 development with read-only permissions, pinned actions, and checkout credential
 persistence disabled. Do not add live PurpleAir calls or credentialed smoke

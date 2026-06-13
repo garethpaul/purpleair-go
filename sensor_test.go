@@ -2,8 +2,10 @@ package purpleair
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +19,24 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return fn(req)
+}
+
+type trackingReadCloser struct {
+	io.Reader
+	closed bool
+}
+
+func (body *trackingReadCloser) Close() error {
+	body.closed = true
+	return nil
+}
+
+type failingReader struct {
+	err error
+}
+
+func (reader failingReader) Read([]byte) (int, error) {
+	return 0, reader.err
 }
 
 func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
@@ -166,6 +186,111 @@ func TestSensorWithErrorReturnsMalformedJSONErrors(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, sensor)
+}
+
+func TestSensorWithErrorWrapsResponseReadErrors(t *testing.T) {
+	readErr := errors.New("fixture read failure")
+	body := &trackingReadCloser{Reader: failingReader{err: readErr}}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "purpleair: read response body")
+	assert.True(t, errors.Is(err, readErr))
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorWrapsJSONDecodeErrors(t *testing.T) {
+	body := &trackingReadCloser{Reader: strings.NewReader(`{"results":[`)}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "purpleair: decode response body")
+	var syntaxErr *json.SyntaxError
+	assert.True(t, errors.As(err, &syntaxErr))
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
+	testCases := map[string]struct {
+		statusCode    int
+		payload       string
+		expectedError string
+	}{
+		"unexpected status": {
+			statusCode:    http.StatusServiceUnavailable,
+			payload:       "unavailable",
+			expectedError: "unexpected status 503",
+		},
+		"oversized body": {
+			statusCode:    http.StatusOK,
+			payload:       strings.Repeat(" ", maxSensorResponseBytes+1),
+			expectedError: "response body exceeds",
+		},
+		"blank body": {
+			statusCode:    http.StatusOK,
+			payload:       " \t\n",
+			expectedError: "response body is empty",
+		},
+		"empty results": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[]}`,
+			expectedError: "no results for sensor",
+		},
+		"invalid result id": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[{"ID":0}]}`,
+			expectedError: "invalid sensor id",
+		},
+		"missing requested identity": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[{"ID":17938}]}`,
+			expectedError: "does not include requested sensor",
+		},
+		"success": {
+			statusCode: http.StatusOK,
+			payload:    `{"results":[{"ID":17937}]}`,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			body := &trackingReadCloser{Reader: strings.NewReader(testCase.payload)}
+			client := NewClient()
+			client.HTTPClient = &http.Client{
+				Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					return &http.Response{StatusCode: testCase.statusCode, Body: body}, nil
+				}),
+			}
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.True(t, body.closed)
+			if testCase.expectedError == "" {
+				assert.NoError(t, err)
+				assert.NotNil(t, sensor)
+				return
+			}
+			assert.Nil(t, sensor)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.expectedError)
+		})
+	}
 }
 
 func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
