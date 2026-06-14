@@ -39,6 +39,11 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 	if sensorId == "" {
 		return nil, fmt.Errorf("purpleair: sensor id is required")
 	}
+	for _, digit := range sensorId {
+		if digit < '0' || digit > '9' {
+			return nil, fmt.Errorf("purpleair: sensor id must be a positive integer")
+		}
+	}
 	requestedSensorID, parseErr := strconv.Atoi(sensorId)
 	if parseErr != nil || requestedSensorID <= 0 {
 		return nil, fmt.Errorf("purpleair: sensor id must be a positive integer")

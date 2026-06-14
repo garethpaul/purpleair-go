@@ -59,8 +59,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
   contain no sensor results or results with non-positive sensor IDs. Sensor IDs
-  must be positive decimal integers, and each response must preserve the
-  requested sensor identity in at least one result.
+  must contain only ASCII decimal digits and represent positive integers;
+  signed and non-ASCII forms are rejected before any request. Each response
+  must preserve the requested sensor identity in at least one result.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
   timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
   when a caller needs a different deadline.

@@ -152,7 +152,9 @@ if ! grep -Fq "TestSensorWithErrorRejectsInvalidResultIDs" "$ROOT_DIR/sensor_tes
   exit 1
 fi
 
-if ! grep -Fq "strconv.Atoi(sensorId)" "$ROOT_DIR/sensor.go" ||
+if ! grep -Fq "for _, digit := range sensorId" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "digit < '0' || digit > '9'" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "strconv.Atoi(sensorId)" "$ROOT_DIR/sensor.go" ||
   ! grep -Fq "sensor id must be a positive integer" "$ROOT_DIR/sensor.go" ||
   ! grep -Fq "response does not include requested sensor" "$ROOT_DIR/sensor.go"; then
   printf '%s\n' "Sensor requests and responses must preserve requested sensor identity." >&2
@@ -174,6 +176,20 @@ if ! grep -Fq "invalid sensor IDs must fail before HTTP requests" "$ROOT_DIR/sen
   exit 1
 fi
 
+if ! grep -Fq '"+1"' "$ROOT_DIR/sensor_test.go" ||
+  ! grep -Fq '"１２"' "$ROOT_DIR/sensor_test.go"; then
+  printf '%s\n' "Invalid sensor ID tests must reject signed and non-ASCII forms." >&2
+  exit 1
+fi
+
+DECIMAL_SENSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-decimal-sensor-id-validation.md"
+if ! grep -Fq "Status: Completed" "$DECIMAL_SENSOR_PLAN" ||
+  ! grep -Fq "signed and non-ASCII forms" "$DECIMAL_SENSOR_PLAN" ||
+  ! grep -Fq "make check" "$DECIMAL_SENSOR_PLAN"; then
+  printf '%s\n' "Decimal sensor ID plan must record completed status and verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Sensor Result ID Validation" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md" ||
   ! grep -Fq "make check" "$ROOT_DIR/plans/2026-06-12-001-fix-sensor-result-id-validation-plan.md"; then
   printf '%s\n' "Sensor result ID validation plan must document repository verification." >&2
@@ -190,6 +206,13 @@ done
 for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
   if ! grep -Fq "requested sensor identity" "$document"; then
     printf '%s\n' "$document must document requested sensor identity validation." >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "ASCII decimal" "$document"; then
+    printf '%s\n' "$document must document ASCII decimal requested sensor IDs." >&2
     exit 1
   fi
 done

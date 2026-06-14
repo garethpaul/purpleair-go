@@ -69,6 +69,8 @@ persistence disabled. Do not add live PurpleAir calls or credentialed smoke
 tests to the workflow without a separate security review.
 Decoded sensor results should reject non-positive sensor IDs so malformed
 upstream records are not returned as valid zero-value sensor data.
+Requested sensor IDs must contain only ASCII decimal digits; signed and
+non-ASCII forms are rejected before any network request.
 Responses must preserve the requested sensor identity in at least one positive
 result so proxied, stale, or malformed data is not attributed to another sensor.
 
