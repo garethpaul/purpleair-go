@@ -1,6 +1,6 @@
 # Make Go Verification Location Independent
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -28,17 +28,30 @@ repository's verification gate.
 
 ## Verification
 
-- every Make alias, including `make check`, from the repository root on Go
-  1.25.11 and Go 1.26.4
+- every Make alias, including `make check`, from the repository root
+- full verification on Go 1.25.11 and Go 1.26.4
 - `make -f /path/to/Makefile check` from an unrelated directory, including an
   attempted command-line repository-root override
 - hostile mutations covering root derivation and every rooted recipe
 - `go mod verify`, `git diff --check`, and exact-base dependency, workflow,
   API-surface, secret, captured-prompt, and generated-artifact scans
 
-## Work Planned
+## Work Completed
 
-- Add an override-protected absolute repository root to the Makefile.
-- Prefix the docs, format, vet, test, race, and baseline-check recipes with a
+- Added an override-protected absolute repository root to the Makefile.
+- Prefixed the docs, format, vet, test, race, and baseline-check recipes with a
   change to that root.
-- Extend the scripted baseline with exact Make and completed-plan contracts.
+- Extended the scripted baseline with exact Make and completed-plan contracts.
+
+## Verification Results
+
+- Every Make alias passed locally from both the repository root and an
+  unrelated directory with `REPO_ROOT=/tmp` supplied on the command line.
+- Go 1.25.11 and Go 1.26.4 passed full root and external `make check` runs in
+  network-disabled containers against read-only disposable Git checkouts.
+- Seven hostile mutations rejected removal of override protection and each
+  rooted executable recipe.
+- `go mod verify` and `git diff --check` passed; exact-base checks preserved Go
+  sources, modules, workflows, API documentation, and security guidance.
+- Secret, captured-prompt, generated-artifact, dependency, and workflow scans
+  found no unintended changes or findings.
