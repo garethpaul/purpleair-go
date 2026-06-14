@@ -1,29 +1,31 @@
 .PHONY: check build docs fmt lint race test vet verify
 
+override REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 docs:
-	@for plan in docs/plans/*.md; do \
+	@cd "$(REPO_ROOT)" && for plan in docs/plans/*.md; do \
 		test -f "$$plan"; \
 		grep -q "Status: Completed" "$$plan"; \
 		grep -q "make check" "$$plan"; \
 	done
 
 fmt:
-	test -z "$$(gofmt -l *.go)"
+	cd "$(REPO_ROOT)" && test -z "$$(gofmt -l *.go)"
 
 lint: fmt
 
 vet:
-	go vet ./...
+	cd "$(REPO_ROOT)" && go vet ./...
 
 test:
-	go test ./...
+	cd "$(REPO_ROOT)" && go test ./...
 
 race:
-	go test -race ./...
+	cd "$(REPO_ROOT)" && go test -race ./...
 
 build: test
 
 verify: lint vet test race build docs
 
 check: verify
-	scripts/check-baseline.sh
+	cd "$(REPO_ROOT)" && scripts/check-baseline.sh

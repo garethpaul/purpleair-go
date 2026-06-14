@@ -41,8 +41,20 @@ for path in \
   "docs/plans/2026-06-12-sensor-response-identity.md" \
   "docs/plans/2026-06-13-response-error-context-and-body-close.md" \
   "docs/plans/2026-06-13-response-content-length-preflight.md" \
+  "docs/plans/2026-06-14-location-independent-make.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for evidence in \
+  "Go 1.25.11" \
+  "Go 1.26.4" \
+  "unrelated directory" \
+  "hostile mutations rejected"; do
+  if ! grep -Fq "$evidence" "$ROOT_DIR/docs/plans/2026-06-14-location-independent-make.md"; then
+    printf '%s\n' "Location-independent Make plan must preserve verification evidence: $evidence" >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq "res.ContentLength > maxSensorResponseBytes" "$ROOT_DIR/sensor.go"; then
@@ -186,6 +198,20 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
   exit 1
 fi
+
+for make_contract in \
+  'override REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' \
+  '@cd "$(REPO_ROOT)" && for plan in docs/plans/*.md; do \' \
+  'cd "$(REPO_ROOT)" && test -z "$$(gofmt -l *.go)"' \
+  'cd "$(REPO_ROOT)" && go vet ./...' \
+  'cd "$(REPO_ROOT)" && go test ./...' \
+  'cd "$(REPO_ROOT)" && go test -race ./...' \
+  'cd "$(REPO_ROOT)" && scripts/check-baseline.sh'; do
+  if ! grep -Fq "$make_contract" "$MAKEFILE"; then
+    printf '%s\n' "Makefile must preserve rooted recipe: $make_contract" >&2
+    exit 1
+  fi
+done
 
 for target in "docs:" "fmt:" "lint:" "vet:" "test:" "race:" "build:" "verify:" "check:"; do
   if ! grep -Fq "$target" "$MAKEFILE"; then
