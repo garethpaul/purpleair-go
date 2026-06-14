@@ -427,7 +427,7 @@ func TestSensorWithErrorRejectsInvalidRequestedSensorIDs(t *testing.T) {
 		}),
 	}
 
-	for _, sensorID := range []string{"0", "-1", "1.5", "sensor"} {
+	for _, sensorID := range []string{"0", "-1", "+1", "1.5", "sensor", "１２"} {
 		sensor, err := client.SensorWithError(sensorID)
 
 		assert.Nil(t, sensor)

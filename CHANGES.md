@@ -22,6 +22,8 @@
   results.
 - Required positive decimal request IDs and rejected responses that do not
   preserve the requested sensor identity in at least one result.
+- Required requested sensor IDs to use ASCII decimal digits, rejecting signed
+  and non-ASCII spellings before network access.
 
 ## 2026-06-10
 

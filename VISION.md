@@ -42,6 +42,7 @@ Priority:
 - Bound sensor response body reads before JSON parsing
 - Reject an oversized declared Content-Length before reading the response body
 - Reject non-positive sensor IDs in decoded response records
+- Require ASCII decimal requested sensor IDs before network access
 - Preserve the requested sensor identity in decoded response records
 - Wrap transport failures with PurpleAir-specific request context
 - Wrap response read and decode failures with inspectable PurpleAir context;
