@@ -46,6 +46,9 @@ It also rejects URL fragments so local-only tokens or notes do not hide in
 endpoint configuration.
 `SensorWithError` should return explicit errors for empty HTTP response bodies
 instead of panicking or treating malformed upstream responses as valid data.
+The Sensor process exit boundary requires the pointer-only `Sensor` wrapper to
+return `nil` on lookup errors instead of logging fatally or terminating the
+embedding process.
 It should also reject nil HTTP responses from custom transports before reading
 status codes or response bodies.
 Transport failures should include PurpleAir-specific request context while

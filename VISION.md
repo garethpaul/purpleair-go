@@ -20,6 +20,8 @@ The current focus is:
 Priority:
 
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
+- Keep the Sensor process exit boundary so compatibility lookups return `nil`
+  rather than terminating the embedding process
 - Support caller-controlled sensor request cancellation and deadlines
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior

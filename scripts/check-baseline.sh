@@ -42,9 +42,50 @@ for path in \
   "docs/plans/2026-06-13-response-error-context-and-body-close.md" \
   "docs/plans/2026-06-13-response-content-length-preflight.md" \
   "docs/plans/2026-06-14-location-independent-make.md" \
+  "docs/plans/2026-06-16-sensor-process-exit-boundary.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+SENSOR_WRAPPER=$(sed -n '/^func (c \*Client) Sensor(/,/^}/p' "$ROOT_DIR/sensor.go")
+if printf '%s\n' "$SENSOR_WRAPPER" | grep -Eq 'log\.Fatal|panic\(' ||
+  ! printf '%s\n' "$SENSOR_WRAPPER" | grep -Fq 'pa, err := c.SensorWithError(sensorId)' ||
+  ! printf '%s\n' "$SENSOR_WRAPPER" | grep -Fq 'if err != nil {' ||
+  ! printf '%s\n' "$SENSOR_WRAPPER" | grep -Fq 'return nil' ||
+  ! printf '%s\n' "$SENSOR_WRAPPER" | grep -Fq 'return pa'; then
+  printf '%s\n' "Sensor compatibility wrapper must return nil without exiting on lookup errors." >&2
+  exit 1
+fi
+
+for test_contract in \
+  "TestSensorReturnsNilInsteadOfExitingOnError" \
+  'assert.Nil(t, client.Sensor(" "))' \
+  "TestSensorReturnsDataOnSuccess" \
+  'assert.NotNil(t, sensor)' \
+  'assert.Equal(t, 17937, sensor.Results[0].ID)'; do
+  if ! grep -Fq "$test_contract" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Sensor compatibility tests must preserve: $test_contract" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "Sensor process exit boundary" "$document"; then
+    printf '%s\n' "$document must document the Sensor process exit boundary." >&2
+    exit 1
+  fi
+done
+
+SENSOR_EXIT_PLAN="$ROOT_DIR/docs/plans/2026-06-16-sensor-process-exit-boundary.md"
+SENSOR_EXIT_VERIFICATION=$(sed -n '/^## Verification Completed$/,$p' "$SENSOR_EXIT_PLAN")
+if ! grep -Fq "Status: Completed" "$SENSOR_EXIT_PLAN" ||
+  ! printf '%s\n' "$SENSOR_EXIT_VERIFICATION" | grep -Fq "All repository and external-directory Make gates passed" ||
+  ! printf '%s\n' "$SENSOR_EXIT_VERIFICATION" | grep -Fq "Seven isolated hostile mutations were rejected" ||
+  ! printf '%s\n' "$SENSOR_EXIT_VERIFICATION" | grep -Fq "go test -race" ||
+  printf '%s\n' "$SENSOR_EXIT_VERIFICATION" | grep -Eiq '\b(pending|todo|tbd|not run)\b'; then
+  printf '%s\n' "Sensor process exit boundary plan must record completed verification." >&2
+  exit 1
+fi
 
 for evidence in \
   "Go 1.25.11" \

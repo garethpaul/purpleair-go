@@ -1,6 +1,6 @@
 # Sensor Process Exit Boundary
 
-status: planned
+Status: Completed
 
 ## Problem
 
@@ -60,3 +60,26 @@ Test scenarios:
   `SensorWithContext`.
 - Mocked tests do not exercise live PurpleAir availability or credentials.
 - This change is stacked on PR #6, which must remain open and merge first.
+
+## Work Completed
+
+- Removed fatal logging from the pointer-only compatibility wrapper and return
+  `nil` when the delegated lookup fails.
+- Added direct failure-continuation and successful mocked-response tests while
+  preserving the existing method signature.
+- Added a method-scoped static contract and synchronized README, security,
+  vision, and changelog guidance.
+
+## Verification Completed
+
+- Repository and external-directory `make check` passed, including gofmt,
+  `go vet`, unit tests, `go test -race`, build-through-test, documentation, and
+  the fail-closed baseline script.
+- All repository and external-directory Make gates passed.
+- Seven isolated hostile mutations were rejected across fatal logging,
+  non-nil failure fallback, success delegation, failure coverage, success
+  coverage, guidance, and completed plan status.
+- Exact diff, generated-artifact, credential, conflict-marker, binary,
+  large-file, mode, and whitespace audits passed.
+- The deterministic tests used mocked HTTP servers and made no live PurpleAir
+  request or credentialed call.

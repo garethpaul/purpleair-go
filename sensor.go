@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -18,11 +17,11 @@ const (
 	maxSensorResponseBytes = 1 << 20
 )
 
-// Get Sensor Data
+// Sensor gets sensor data and returns nil when the compatibility lookup fails.
 func (c *Client) Sensor(sensorId string) *PurpleAir {
 	pa, err := c.SensorWithError(sensorId)
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
 
 	return pa

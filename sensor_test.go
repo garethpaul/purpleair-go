@@ -31,6 +31,28 @@ func (body *trackingReadCloser) Close() error {
 	return nil
 }
 
+func TestSensorReturnsNilInsteadOfExitingOnError(t *testing.T) {
+	client := NewClient()
+
+	assert.Nil(t, client.Sensor(" "))
+}
+
+func TestSensorReturnsDataOnSuccess(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Compatibility Sensor"}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json")
+	client.HTTPClient = server.Client()
+
+	sensor := client.Sensor("17937")
+
+	assert.NotNil(t, sensor)
+	assert.Equal(t, 17937, sensor.Results[0].ID)
+}
+
 type failingReader struct {
 	err error
 }

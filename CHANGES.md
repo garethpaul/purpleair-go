@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-16
+
+- Added the Sensor process exit boundary so the pointer-only compatibility
+  lookup returns `nil` on errors instead of terminating the embedding process.
+
 ## 2026-06-13
 
 - Wrapped response read and JSON decode failures with PurpleAir-specific phase

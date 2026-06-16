@@ -52,7 +52,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
-- Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
+- Use `SensorWithError(sensorID)` for error-returning calls. The compatibility
+  `Sensor(sensorID)` wrapper preserves its pointer-only signature but returns
+  `nil` on failure under the Sensor process exit boundary.
 - Use `SensorWithContext(ctx, sensorID)` when callers need cancellation or a
   deadline shorter than the client's HTTP timeout.
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
