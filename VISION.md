@@ -23,6 +23,7 @@ Priority:
 - Keep the Sensor process exit boundary so compatibility lookups return `nil`
   rather than terminating the embedding process
 - Support caller-controlled sensor request cancellation and deadlines
+- Preserve the active-stack nil context guard before request construction
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Keep the default total HTTP timeout at a 30-second boundary while preserving

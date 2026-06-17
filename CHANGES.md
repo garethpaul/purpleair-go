@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Restored the active-stack nil context guard with a stable error, preserved
+  sensor-ID validation order, and no-request regression coverage.
+
 ## 2026-06-16
 
 - Added the Sensor process exit boundary so the pointer-only compatibility

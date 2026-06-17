@@ -55,6 +55,8 @@ Transport failures should include PurpleAir-specific request context while
 preserving the underlying Go error for callers that inspect error chains.
 Caller-provided cancellation and deadlines should propagate to sensor HTTP
 requests so applications can stop work before the default client timeout.
+The active-stack nil context guard rejects missing caller context before
+request construction without attempting an HTTP request.
 The default client uses a 30-second timeout for constructor, nil, and zero-value
 clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
 without the package replacing their policy.

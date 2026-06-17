@@ -43,9 +43,50 @@ for path in \
   "docs/plans/2026-06-13-response-content-length-preflight.md" \
   "docs/plans/2026-06-14-location-independent-make.md" \
   "docs/plans/2026-06-16-sensor-process-exit-boundary.md" \
+  "docs/plans/2026-06-17-active-stack-nil-context-guard.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+if ! grep -Fq "if ctx == nil" "$ROOT_DIR/sensor.go" ||
+  ! grep -Fq "purpleair: context is required" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "SensorWithContext must reject nil context before request construction." >&2
+  exit 1
+fi
+
+sensor_id_line=$(grep -nF "requestedSensorID, parseErr := strconv.Atoi(sensorId)" "$ROOT_DIR/sensor.go" | cut -d: -f1)
+nil_context_line=$(grep -nF "if ctx == nil" "$ROOT_DIR/sensor.go" | cut -d: -f1)
+request_line=$(grep -nF "http.NewRequestWithContext" "$ROOT_DIR/sensor.go" | cut -d: -f1)
+if [ -z "$sensor_id_line" ] || [ -z "$nil_context_line" ] || [ -z "$request_line" ] ||
+  [ "$sensor_id_line" -ge "$nil_context_line" ] || [ "$nil_context_line" -ge "$request_line" ]; then
+  printf '%s\n' "Sensor ID and nil context validation must precede request construction." >&2
+  exit 1
+fi
+
+for test_contract in \
+  "TestSensorWithContextRejectsNilContext" \
+  'assert.EqualError(t, err, "purpleair: context is required")' \
+  "nil context must fail before HTTP requests" \
+  "sensor id validation must remain before nil context validation"; do
+  if ! grep -Fq "$test_contract" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Sensor tests must preserve nil-context contract: $test_contract" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "active-stack nil context guard" "$document"; then
+    printf '%s\n' "$document must document the active-stack nil context guard." >&2
+    exit 1
+  fi
+done
+
+NIL_CONTEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-17-active-stack-nil-context-guard.md"
+if ! grep -Fq "Status: Completed" "$NIL_CONTEXT_PLAN" ||
+  ! grep -Fq "make check" "$NIL_CONTEXT_PLAN"; then
+  printf '%s\n' "Active-stack nil context plan must record completed status and verification." >&2
+  exit 1
+fi
 
 SENSOR_WRAPPER=$(sed -n '/^func (c \*Client) Sensor(/,/^}/p' "$ROOT_DIR/sensor.go")
 if printf '%s\n' "$SENSOR_WRAPPER" | grep -Eq 'log\.Fatal|panic\(' ||

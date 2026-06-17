@@ -85,6 +85,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   the bounded read path.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
+- The active-stack nil context guard returns `purpleair: context is required`
+  before request construction while preserving sensor-ID validation order.
 
 ## Testing and Verification
 

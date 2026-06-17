@@ -1,6 +1,6 @@
 # Active Stack Nil Context Guard
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -37,3 +37,25 @@ PurpleAir-specific error and a regression proving that no request is attempted.
 - Audit the exact diff, generated artifacts, credentials, conflicts, modes,
   binaries, large files, dependency and workflow drift, and whitespace before
   commit and push.
+
+## Work Completed
+
+- Restored an explicit nil-context guard on the active sensor-validation stack
+  after positive ASCII decimal sensor-ID validation and before request
+  construction.
+- Added a stable PurpleAir-specific error and a regression proving no transport
+  call occurs while malformed sensor IDs retain precedence.
+- Added fail-closed source, ordering, test, guidance, and completed-plan
+  contracts.
+
+## Verification Results
+
+- Focused nil-context and cancellation tests passed, and `sh -n` plus `dash -n`
+  accepted the baseline script.
+- A complete isolated `make check` passed with disposable Git metadata before
+  the plan was marked completed.
+- Repository and external-directory `make check` passed, including formatting,
+  vet, unit tests, race tests, documentation, and the fail-closed baseline.
+- Seven isolated hostile mutations were rejected across the source guard, stable
+  error, regression execution, no-request proof, README guidance, and security
+  guidance, plus completed plan status.

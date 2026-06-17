@@ -47,6 +47,9 @@ func (c *Client) SensorWithContext(ctx context.Context, sensorId string) (*Purpl
 	if parseErr != nil || requestedSensorID <= 0 {
 		return nil, fmt.Errorf("purpleair: sensor id must be a positive integer")
 	}
+	if ctx == nil {
+		return nil, fmt.Errorf("purpleair: context is required")
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.sensorURL(sensorId), nil)
 	if err != nil {
