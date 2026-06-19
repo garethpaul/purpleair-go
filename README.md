@@ -52,13 +52,18 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
-- Use `SensorWithError(sensorID)` for error-returning calls, or the compatibility `Sensor(sensorID)` wrapper for the original behavior.
+- Use `SensorWithError(sensorID)` for error-returning calls. The compatibility
+  `Sensor(sensorID)` wrapper preserves its pointer-only signature but returns
+  `nil` on failure under the Sensor process exit boundary.
 - Use `SensorWithContext(ctx, sensorID)` when callers need cancellation or a
   deadline shorter than the client's HTTP timeout.
 - `SensorWithError(sensorID)` returns errors for blank sensor IDs, request
   failures, nil HTTP responses, empty response bodies, non-2xx responses,
   oversized response bodies, malformed JSON, and successful responses that
-  contain no sensor results or results with non-positive sensor IDs.
+  contain no sensor results or results with non-positive sensor IDs. Sensor IDs
+  must contain only ASCII decimal digits and represent positive integers;
+  signed and non-ASCII forms are rejected before any request. Each response
+  must preserve the requested sensor identity in at least one result.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
   timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
   when a caller needs a different deadline.
@@ -70,10 +75,23 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   configuration or request headers outside the checked-in URL instead.
 - Custom base URLs must not include URL fragments; keep local-only tokens or
   notes out of endpoint strings.
-- `SensorWithError` wraps transport failures with PurpleAir-specific request
-  context while preserving the original Go error.
+- `SensorWithError` reports transport failures without rendering the request
+  URL, so API keys in custom endpoint query strings are not copied into logs;
+  the original Go error remains available through `errors.Is` and `errors.As`.
+- Response read and JSON decode failures include PurpleAir-specific phase
+  context while preserving `errors.Is` and `errors.As`; all non-nil HTTP
+  response bodies are closed on successful and failed lookups. A close failure
+  is returned after an otherwise successful lookup, while an earlier request,
+  status, read, size, decode, or validation error keeps precedence.
+- Responses with a declared Content-Length above 1 MiB are rejected before the
+  first body read; unknown, absent, and misleading lengths remain protected by
+  the bounded read path. Result arrays are decoded incrementally and limited to
+  1,024 entries so compact JSON cannot expand into an unbounded slice of large
+  result structs.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
+- The active-stack nil context guard returns `purpleair: context is required`
+  before request construction while preserving sensor-ID validation order.
 
 ## Testing and Verification
 
@@ -99,6 +117,8 @@ permissions and pinned actions.
 
 The baseline script checks required files, module metadata, completed docs-plan
 metadata, verification documentation, and local secret/editor metadata hygiene.
+GitHub Actions runs the same no-live-network `make check` gate on pushes, pull
+requests, and manual dispatches without persisting checkout credentials.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -126,6 +146,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   sensor ID and timeout guard baseline.
 - See `docs/plans/2026-06-12-default-http-timeout-boundary.md` for the bounded
   30-second default and caller override contract.
+- See `docs/plans/2026-06-12-sensor-response-identity.md` for positive request
+  IDs and requested sensor identity validation.
 - See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
   `SensorWithError` examples baseline.
 - See `docs/plans/2026-06-09-custom-base-url-client.md` for the custom endpoint
@@ -142,14 +164,20 @@ When the required SDK or runtime is unavailable, use static checks and source re
   context, nil-response handling, and repository gate aliases.
 - See `docs/plans/2026-06-09-response-body-size-guard.md` for the
   `SensorWithError` response body size guard.
+- See `docs/plans/2026-06-13-response-error-context-and-body-close.md` for
+  wrapped response-phase errors and response body lifecycle contracts.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard and local metadata checks.
 - See `docs/plans/2026-06-10-go-vet-verification-gate.md` for the static
   analysis verification gate.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
 - See `docs/plans/2026-06-10-hosted-go-validation.md` for the current-Go matrix
   and canonical race detector gate.
 - See `docs/plans/2026-06-10-sensor-context-cancellation.md` for caller-driven
   request cancellation and deadline support.
+- See `docs/plans/2026-06-19-response-boundary-review.md` for request URL
+  secrecy, close-error precedence, bounded result decoding, and concurrent
+  client reuse evidence.
 
 ## Contributing
 

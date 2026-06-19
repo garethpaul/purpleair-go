@@ -1,5 +1,36 @@
 # Changes
 
+## 2026-06-19
+
+- Redacted request URLs from transport error strings while preserving the
+  original error chain for cancellation, deadlines, and diagnostics.
+- Returned response-body close failures after otherwise successful lookups and
+  preserved primary error precedence on failed lookups.
+- Bounded incremental result decoding to 1,024 entries to prevent compact JSON
+  arrays from amplifying into excessive `Result` allocations.
+- Added property-style secret-redaction coverage and concurrent client reuse
+  coverage under the race detector without live PurpleAir requests.
+
+## 2026-06-17
+
+- Restored the active-stack nil context guard with a stable error, preserved
+  sensor-ID validation order, and no-request regression coverage.
+
+## 2026-06-16
+
+- Added the Sensor process exit boundary so the pointer-only compatibility
+  lookup returns `nil` on errors instead of terminating the embedding process.
+
+## 2026-06-13
+
+- Wrapped response read and JSON decode failures with PurpleAir-specific phase
+  context while preserving underlying Go errors for `errors.Is` and
+  `errors.As`.
+- Added deterministic coverage proving all non-nil response bodies are closed
+  across status, read, size, blank, decode, validation, and success paths.
+- Rejected an oversized declared Content-Length before the first response body
+  read while preserving the bounded fallback for absent or inaccurate lengths.
+
 ## 2026-06-12
 
 - Reduced the default total sensor HTTP timeout from five minutes to a
@@ -10,10 +41,15 @@
   cannot be returned as valid data.
 - Added mocked coverage for invalid identities and multiple positive sensor ID
   results.
+- Required positive decimal request IDs and rejected responses that do not
+  preserve the requested sensor identity in at least one result.
+- Required requested sensor IDs to use ASCII decimal digits, rejecting signed
+  and non-ASCII spellings before network access.
 
 ## 2026-06-10
 
-- Added pinned hosted verification on Go 1.25.11 and Go 1.26.4.
+- Added credential-free, pinned hosted verification on Go 1.25.11 and Go
+  1.26.4 that runs the local no-live-network `make check` baseline.
 - Added `make race` and wired `go test -race ./...` into the canonical check.
 - Added a `make vet` static analysis gate and wired it into `make verify` and
   `make check`.

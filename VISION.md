@@ -12,13 +12,18 @@ straightforward sensor lookup workflow.
 Current baseline: `make check` verifies Go formatting, `go vet`, mocked unit
 tests, the Go build-through-test gate, and completed `docs/plans` coverage
 without calling the live PurpleAir endpoint.
+GitHub Actions runs the same no-live-network gate on pinned current Go patch
+releases without persisting checkout credentials.
 
 The current focus is:
 
 Priority:
 
 - Preserve `NewClient()` and the `Sensor(sensorId)` lookup path
+- Keep the Sensor process exit boundary so compatibility lookups return `nil`
+  rather than terminating the embedding process
 - Support caller-controlled sensor request cancellation and deadlines
+- Preserve the active-stack nil context guard before request construction
 - Keep PurpleAir result fields mapped explicitly
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Keep the default total HTTP timeout at a 30-second boundary while preserving
@@ -38,8 +43,14 @@ Priority:
 - Return explicit errors for nil HTTP responses from custom transports
 - Return explicit errors for empty HTTP response bodies
 - Bound sensor response body reads before JSON parsing
+- Reject an oversized declared Content-Length before reading the response body
 - Reject non-positive sensor IDs in decoded response records
+- Require ASCII decimal requested sensor IDs before network access
+- Preserve the requested sensor identity in decoded response records
 - Wrap transport failures with PurpleAir-specific request context
+- Wrap response read and decode failures with inspectable PurpleAir context;
+  all non-nil response bodies are closed across success and failure paths
+- Keep GitHub Actions aligned with the mocked `make check` baseline
 
 Next priorities:
 

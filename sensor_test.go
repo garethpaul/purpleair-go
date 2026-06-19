@@ -2,13 +2,18 @@ package purpleair
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
+	"testing/quick"
 
 	assert "github.com/stretchr/testify/require"
 )
@@ -17,6 +22,67 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return fn(req)
+}
+
+type trackingReadCloser struct {
+	io.Reader
+	closed bool
+}
+
+func (body *trackingReadCloser) Close() error {
+	body.closed = true
+	return nil
+}
+
+type errorReadCloser struct {
+	io.Reader
+	closeErr error
+	closed   bool
+}
+
+func (body *errorReadCloser) Close() error {
+	body.closed = true
+	return body.closeErr
+}
+
+func TestSensorReturnsNilInsteadOfExitingOnError(t *testing.T) {
+	client := NewClient()
+
+	assert.Nil(t, client.Sensor(" "))
+}
+
+func TestSensorReturnsDataOnSuccess(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Compatibility Sensor"}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json")
+	client.HTTPClient = server.Client()
+
+	sensor := client.Sensor("17937")
+
+	assert.NotNil(t, sensor)
+	assert.Equal(t, 17937, sensor.Results[0].ID)
+}
+
+type failingReader struct {
+	err error
+}
+
+func (reader failingReader) Read([]byte) (int, error) {
+	return 0, reader.err
+}
+
+type countingReader struct {
+	reader io.Reader
+	reads  int
+}
+
+func (reader *countingReader) Read(buffer []byte) (int, error) {
+	reader.reads++
+	return reader.reader.Read(buffer)
 }
 
 func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
@@ -69,6 +135,64 @@ func TestSensorWithContextPropagatesCancellation(t *testing.T) {
 	}
 }
 
+func TestSensorWithContextRedactsRequestURLSecrets(t *testing.T) {
+	requestErr := errors.New("dial failed")
+	client := NewClientWithBaseURL("https://example.test/json?api_key=do-not-expose")
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return nil, requestErr
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(context.Background(), "17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, requestErr))
+	assert.NotContains(t, err.Error(), "do-not-expose")
+	assert.NotContains(t, err.Error(), "api_key")
+}
+
+func TestSensorWithContextRedactsArbitraryQuerySecrets(t *testing.T) {
+	property := func(value uint64) bool {
+		secret := fmt.Sprintf("token-%016x", value)
+		client := NewClientWithBaseURL("https://example.test/json?api_key=" + secret)
+		client.HTTPClient = &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				return nil, context.DeadlineExceeded
+			}),
+		}
+
+		_, err := client.SensorWithContext(context.Background(), "17937")
+		return err != nil && errors.Is(err, context.DeadlineExceeded) && !strings.Contains(err.Error(), secret)
+	}
+
+	assert.NoError(t, quick.Check(property, &quick.Config{MaxCount: 100}))
+}
+
+func TestSensorWithContextRejectsNilContext(t *testing.T) {
+	requests := 0
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			requests++
+			return nil, fmt.Errorf("nil context must fail before HTTP requests")
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(nil, "17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: context is required")
+	assert.Equal(t, 0, requests, "nil context must fail before HTTP requests")
+
+	sensor, err = client.SensorWithContext(nil, "not-a-sensor-id")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: sensor id must be a positive integer")
+	assert.Equal(t, 0, requests, "sensor id validation must remain before nil context validation")
+}
+
 func TestSensorWithErrorRejectsBlankSensorIDs(t *testing.T) {
 	client := NewClient()
 
@@ -104,8 +228,9 @@ func TestSensorWithErrorRejectsOversizedResponseBodies(t *testing.T) {
 	client.HTTPClient = &http.Client{
 		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader(strings.Repeat(" ", maxSensorResponseBytes+1))),
+				StatusCode:    http.StatusOK,
+				ContentLength: -1,
+				Body:          ioutil.NopCloser(strings.NewReader(strings.Repeat(" ", maxSensorResponseBytes+1))),
 			}, nil
 		}),
 	}
@@ -168,6 +293,311 @@ func TestSensorWithErrorReturnsMalformedJSONErrors(t *testing.T) {
 	assert.Nil(t, sensor)
 }
 
+func TestSensorWithErrorWrapsResponseReadErrors(t *testing.T) {
+	readErr := errors.New("fixture read failure")
+	body := &trackingReadCloser{Reader: failingReader{err: readErr}}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "purpleair: read response body")
+	assert.True(t, errors.Is(err, readErr))
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorWrapsJSONDecodeErrors(t *testing.T) {
+	body := &trackingReadCloser{Reader: strings.NewReader(`{"results":[`)}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "purpleair: decode response body")
+	var syntaxErr *json.SyntaxError
+	assert.True(t, errors.As(err, &syntaxErr))
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
+	testCases := map[string]struct {
+		statusCode    int
+		payload       string
+		expectedError string
+	}{
+		"unexpected status": {
+			statusCode:    http.StatusServiceUnavailable,
+			payload:       "unavailable",
+			expectedError: "unexpected status 503",
+		},
+		"oversized body": {
+			statusCode:    http.StatusOK,
+			payload:       strings.Repeat(" ", maxSensorResponseBytes+1),
+			expectedError: "response body exceeds",
+		},
+		"blank body": {
+			statusCode:    http.StatusOK,
+			payload:       " \t\n",
+			expectedError: "response body is empty",
+		},
+		"empty results": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[]}`,
+			expectedError: "no results for sensor",
+		},
+		"invalid result id": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[{"ID":0}]}`,
+			expectedError: "invalid sensor id",
+		},
+		"missing requested identity": {
+			statusCode:    http.StatusOK,
+			payload:       `{"results":[{"ID":17938}]}`,
+			expectedError: "does not include requested sensor",
+		},
+		"success": {
+			statusCode: http.StatusOK,
+			payload:    `{"results":[{"ID":17937}]}`,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			body := &trackingReadCloser{Reader: strings.NewReader(testCase.payload)}
+			client := NewClient()
+			client.HTTPClient = &http.Client{
+				Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					return &http.Response{StatusCode: testCase.statusCode, Body: body}, nil
+				}),
+			}
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.True(t, body.closed)
+			if testCase.expectedError == "" {
+				assert.NoError(t, err)
+				assert.NotNil(t, sensor)
+				return
+			}
+			assert.Nil(t, sensor)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.expectedError)
+		})
+	}
+}
+
+func TestSensorWithErrorReturnsCloseErrorsAfterSuccessfulDecode(t *testing.T) {
+	closeErr := errors.New("close failed")
+	body := &errorReadCloser{
+		Reader:   strings.NewReader(`{"results":[{"ID":17937}]}`),
+		closeErr: closeErr,
+	}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, closeErr))
+	assert.Contains(t, err.Error(), "close response body")
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorPreservesPrimaryErrorsOverCloseErrors(t *testing.T) {
+	readErr := errors.New("read failed")
+	closeErr := errors.New("close failed")
+	body := &errorReadCloser{
+		Reader:   failingReader{err: readErr},
+		closeErr: closeErr,
+	}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, readErr))
+	assert.False(t, errors.Is(err, closeErr))
+	assert.NotContains(t, err.Error(), "close failed")
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorRejectsExcessiveResultCounts(t *testing.T) {
+	var payload strings.Builder
+	payload.WriteString(`{"results":[{"ID":17937}`)
+	for index := 0; index < 1024; index++ {
+		payload.WriteString(`,{"ID":17937}`)
+	}
+	payload.WriteString(`]}`)
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: int64(payload.Len()),
+				Body:          ioutil.NopCloser(strings.NewReader(payload.String())),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "too many sensor results")
+}
+
+func TestSensorWithErrorAcceptsMaximumResultCount(t *testing.T) {
+	var payload strings.Builder
+	payload.WriteString(`{"results":[`)
+	for index := 0; index < maxSensorResults; index++ {
+		if index > 0 {
+			payload.WriteByte(',')
+		}
+		payload.WriteString(`{"ID":17937}`)
+	}
+	payload.WriteString(`]}`)
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: int64(payload.Len()),
+				Body:          ioutil.NopCloser(strings.NewReader(payload.String())),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.Len(t, sensor.Results, maxSensorResults)
+}
+
+func TestSensorWithErrorRejectsNonFiniteCoordinates(t *testing.T) {
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader(`{"results":[{"ID":17937,"Lat":1e309}]}`)),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "decode response body")
+}
+
+func TestClientSupportsConcurrentSensorReuse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		sensorID := req.URL.Query().Get("show")
+		_, _ = fmt.Fprintf(w, `{"results":[{"ID":%s}]}`, sensorID)
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json?api_key=local-test-only")
+	client.HTTPClient = server.Client()
+
+	const requests = 32
+	errorsByRequest := make(chan error, requests)
+	var waitGroup sync.WaitGroup
+	for index := 1; index <= requests; index++ {
+		waitGroup.Add(1)
+		go func(sensorID int) {
+			defer waitGroup.Done()
+			sensor, err := client.SensorWithError(strconv.Itoa(sensorID))
+			if err == nil && (sensor == nil || len(sensor.Results) != 1 || sensor.Results[0].ID != sensorID) {
+				err = fmt.Errorf("unexpected sensor result for %d: %#v", sensorID, sensor)
+			}
+			errorsByRequest <- err
+		}(index)
+	}
+	waitGroup.Wait()
+	close(errorsByRequest)
+
+	for err := range errorsByRequest {
+		assert.NoError(t, err)
+	}
+}
+
+func TestSensorWithErrorRejectsDeclaredOversizedBodiesBeforeReading(t *testing.T) {
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	body := &trackingReadCloser{Reader: reader}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: maxSensorResponseBytes + 1,
+				Body:          body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, fmt.Sprintf("purpleair: response body exceeds %d bytes", maxSensorResponseBytes))
+	assert.Equal(t, 0, reader.reads)
+	assert.True(t, body.closed, "declared oversized body must close without reading")
+}
+
+func TestSensorWithErrorReadsBodiesDeclaredAtLimit(t *testing.T) {
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	body := &trackingReadCloser{Reader: reader}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: maxSensorResponseBytes,
+				Body:          body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, sensor)
+	assert.Greater(t, reader.reads, 0)
+	assert.True(t, body.closed, "declared exact-limit body must close after reading")
+}
+
 func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -179,10 +609,10 @@ func TestSensorWithErrorReturnsEmptyResultErrors(t *testing.T) {
 	client.baseURL = server.URL + "/json"
 	client.HTTPClient = server.Client()
 
-	sensor, err := client.SensorWithError("missing")
+	sensor, err := client.SensorWithError("17937")
 
 	assert.Nil(t, sensor)
-	if err == nil || !strings.Contains(err.Error(), `no results for sensor "missing"`) {
+	if err == nil || !strings.Contains(err.Error(), `no results for sensor "17937"`) {
 		t.Fatalf("expected no-results error, got %v", err)
 	}
 }
@@ -222,7 +652,7 @@ func TestSensorWithErrorRejectsInvalidResultIDs(t *testing.T) {
 func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17937},{"ID":17938}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17937}]}`))
 	}))
 	defer server.Close()
 
@@ -234,4 +664,41 @@ func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, sensor.Results, 2)
+	assert.Equal(t, 17937, sensor.Results[1].ID)
+}
+
+func TestSensorWithErrorRejectsInvalidRequestedSensorIDs(t *testing.T) {
+	client := NewClient()
+	requests := 0
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			requests++
+			return nil, errors.New("unexpected request")
+		}),
+	}
+
+	for _, sensorID := range []string{"0", "-1", "+1", "1.5", "sensor", "１２"} {
+		sensor, err := client.SensorWithError(sensorID)
+
+		assert.Nil(t, sensor)
+		assert.EqualError(t, err, "purpleair: sensor id must be a positive integer")
+	}
+
+	assert.Equal(t, 0, requests, "invalid sensor IDs must fail before HTTP requests")
+}
+
+func TestSensorWithErrorRejectsMismatchedResponseSensorIDs(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17939}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json")
+	client.HTTPClient = server.Client()
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: response does not include requested sensor 17937")
 }
