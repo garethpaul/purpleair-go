@@ -51,8 +51,10 @@ return `nil` on lookup errors instead of logging fatally or terminating the
 embedding process.
 It should also reject nil HTTP responses from custom transports before reading
 status codes or response bodies.
-Transport failures should include PurpleAir-specific request context while
-preserving the underlying Go error for callers that inspect error chains.
+Transport failures should include PurpleAir-specific request context without
+rendering the request URL. Custom endpoints may carry API keys in query
+parameters, so error strings must not copy those values into application logs;
+the underlying Go error remains available to callers through the error chain.
 Caller-provided cancellation and deadlines should propagate to sensor HTTP
 requests so applications can stop work before the default client timeout.
 The active-stack nil context guard rejects missing caller context before
@@ -64,10 +66,14 @@ Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 Responses with a declared Content-Length above the limit are rejected before
 the first body read, while every accepted or unknown declaration still passes
-through the bounded read path.
+through the bounded read path. Result arrays are decoded incrementally and
+limited to 1,024 entries so a compact array cannot amplify into hundreds of
+thousands of large result structs.
 Response read and JSON decode failures retain PurpleAir-specific context and
 their underlying Go errors, and all non-nil response bodies are closed across
-success and failure paths to preserve connection reuse.
+success and failure paths to preserve connection reuse. Close failures are
+reported after otherwise successful lookups but never replace an earlier
+request, status, read, size, decode, or validation error.
 GitHub Actions runs the same no-live-network `make check` gate as local
 development with read-only permissions, pinned actions, and checkout credential
 persistence disabled. Do not add live PurpleAir calls or credentialed smoke

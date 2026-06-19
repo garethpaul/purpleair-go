@@ -75,14 +75,19 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   configuration or request headers outside the checked-in URL instead.
 - Custom base URLs must not include URL fragments; keep local-only tokens or
   notes out of endpoint strings.
-- `SensorWithError` wraps transport failures with PurpleAir-specific request
-  context while preserving the original Go error.
+- `SensorWithError` reports transport failures without rendering the request
+  URL, so API keys in custom endpoint query strings are not copied into logs;
+  the original Go error remains available through `errors.Is` and `errors.As`.
 - Response read and JSON decode failures include PurpleAir-specific phase
   context while preserving `errors.Is` and `errors.As`; all non-nil HTTP
-  response bodies are closed on successful and failed lookups.
+  response bodies are closed on successful and failed lookups. A close failure
+  is returned after an otherwise successful lookup, while an earlier request,
+  status, read, size, decode, or validation error keeps precedence.
 - Responses with a declared Content-Length above 1 MiB are rejected before the
   first body read; unknown, absent, and misleading lengths remain protected by
-  the bounded read path.
+  the bounded read path. Result arrays are decoded incrementally and limited to
+  1,024 entries so compact JSON cannot expand into an unbounded slice of large
+  result structs.
 - `SensorWithContext` propagates the caller context to the HTTP request and
   preserves cancellation and deadline errors through that wrapper.
 - The active-stack nil context guard returns `purpleair: context is required`
@@ -170,6 +175,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   and canonical race detector gate.
 - See `docs/plans/2026-06-10-sensor-context-cancellation.md` for caller-driven
   request cancellation and deadline support.
+- See `docs/plans/2026-06-19-response-boundary-review.md` for request URL
+  secrecy, close-error precedence, bounded result decoding, and concurrent
+  client reuse evidence.
 
 ## Contributing
 

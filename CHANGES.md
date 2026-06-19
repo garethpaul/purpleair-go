@@ -1,5 +1,16 @@
 # Changes
 
+## 2026-06-19
+
+- Redacted request URLs from transport error strings while preserving the
+  original error chain for cancellation, deadlines, and diagnostics.
+- Returned response-body close failures after otherwise successful lookups and
+  preserved primary error precedence on failed lookups.
+- Bounded incremental result decoding to 1,024 entries to prevent compact JSON
+  arrays from amplifying into excessive `Result` allocations.
+- Added property-style secret-redaction coverage and concurrent client reuse
+  coverage under the race detector without live PurpleAir requests.
+
 ## 2026-06-17
 
 - Restored the active-stack nil context guard with a stable error, preserved

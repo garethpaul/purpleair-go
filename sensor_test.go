@@ -9,8 +9,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
+	"testing/quick"
 
 	assert "github.com/stretchr/testify/require"
 )
@@ -29,6 +32,17 @@ type trackingReadCloser struct {
 func (body *trackingReadCloser) Close() error {
 	body.closed = true
 	return nil
+}
+
+type errorReadCloser struct {
+	io.Reader
+	closeErr error
+	closed   bool
+}
+
+func (body *errorReadCloser) Close() error {
+	body.closed = true
+	return body.closeErr
 }
 
 func TestSensorReturnsNilInsteadOfExitingOnError(t *testing.T) {
@@ -119,6 +133,41 @@ func TestSensorWithContextPropagatesCancellation(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("expected canceled request error, got %v", err)
 	}
+}
+
+func TestSensorWithContextRedactsRequestURLSecrets(t *testing.T) {
+	requestErr := errors.New("dial failed")
+	client := NewClientWithBaseURL("https://example.test/json?api_key=do-not-expose")
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return nil, requestErr
+		}),
+	}
+
+	sensor, err := client.SensorWithContext(context.Background(), "17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, requestErr))
+	assert.NotContains(t, err.Error(), "do-not-expose")
+	assert.NotContains(t, err.Error(), "api_key")
+}
+
+func TestSensorWithContextRedactsArbitraryQuerySecrets(t *testing.T) {
+	property := func(value uint64) bool {
+		secret := fmt.Sprintf("token-%016x", value)
+		client := NewClientWithBaseURL("https://example.test/json?api_key=" + secret)
+		client.HTTPClient = &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				return nil, context.DeadlineExceeded
+			}),
+		}
+
+		_, err := client.SensorWithContext(context.Background(), "17937")
+		return err != nil && errors.Is(err, context.DeadlineExceeded) && !strings.Contains(err.Error(), secret)
+	}
+
+	assert.NoError(t, quick.Check(property, &quick.Config{MaxCount: 100}))
 }
 
 func TestSensorWithContextRejectsNilContext(t *testing.T) {
@@ -346,6 +395,162 @@ func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), testCase.expectedError)
 		})
+	}
+}
+
+func TestSensorWithErrorReturnsCloseErrorsAfterSuccessfulDecode(t *testing.T) {
+	closeErr := errors.New("close failed")
+	body := &errorReadCloser{
+		Reader:   strings.NewReader(`{"results":[{"ID":17937}]}`),
+		closeErr: closeErr,
+	}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, closeErr))
+	assert.Contains(t, err.Error(), "close response body")
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorPreservesPrimaryErrorsOverCloseErrors(t *testing.T) {
+	readErr := errors.New("read failed")
+	closeErr := errors.New("close failed")
+	body := &errorReadCloser{
+		Reader:   failingReader{err: readErr},
+		closeErr: closeErr,
+	}
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       body,
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, readErr))
+	assert.False(t, errors.Is(err, closeErr))
+	assert.NotContains(t, err.Error(), "close failed")
+	assert.True(t, body.closed)
+}
+
+func TestSensorWithErrorRejectsExcessiveResultCounts(t *testing.T) {
+	var payload strings.Builder
+	payload.WriteString(`{"results":[{"ID":17937}`)
+	for index := 0; index < 1024; index++ {
+		payload.WriteString(`,{"ID":17937}`)
+	}
+	payload.WriteString(`]}`)
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: int64(payload.Len()),
+				Body:          ioutil.NopCloser(strings.NewReader(payload.String())),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "too many sensor results")
+}
+
+func TestSensorWithErrorAcceptsMaximumResultCount(t *testing.T) {
+	var payload strings.Builder
+	payload.WriteString(`{"results":[`)
+	for index := 0; index < maxSensorResults; index++ {
+		if index > 0 {
+			payload.WriteByte(',')
+		}
+		payload.WriteString(`{"ID":17937}`)
+	}
+	payload.WriteString(`]}`)
+
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode:    http.StatusOK,
+				ContentLength: int64(payload.Len()),
+				Body:          ioutil.NopCloser(strings.NewReader(payload.String())),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.NoError(t, err)
+	assert.Len(t, sensor.Results, maxSensorResults)
+}
+
+func TestSensorWithErrorRejectsNonFiniteCoordinates(t *testing.T) {
+	client := NewClient()
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader(`{"results":[{"ID":17937,"Lat":1e309}]}`)),
+			}, nil
+		}),
+	}
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "decode response body")
+}
+
+func TestClientSupportsConcurrentSensorReuse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		sensorID := req.URL.Query().Get("show")
+		_, _ = fmt.Fprintf(w, `{"results":[{"ID":%s}]}`, sensorID)
+	}))
+	defer server.Close()
+
+	client := NewClientWithBaseURL(server.URL + "/json?api_key=local-test-only")
+	client.HTTPClient = server.Client()
+
+	const requests = 32
+	errorsByRequest := make(chan error, requests)
+	var waitGroup sync.WaitGroup
+	for index := 1; index <= requests; index++ {
+		waitGroup.Add(1)
+		go func(sensorID int) {
+			defer waitGroup.Done()
+			sensor, err := client.SensorWithError(strconv.Itoa(sensorID))
+			if err == nil && (sensor == nil || len(sensor.Results) != 1 || sensor.Results[0].ID != sensorID) {
+				err = fmt.Errorf("unexpected sensor result for %d: %#v", sensorID, sensor)
+			}
+			errorsByRequest <- err
+		}(index)
+	}
+	waitGroup.Wait()
+	close(errorsByRequest)
+
+	for err := range errorsByRequest {
+		assert.NoError(t, err)
 	}
 }
 
