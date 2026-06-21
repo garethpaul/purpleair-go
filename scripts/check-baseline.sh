@@ -44,6 +44,8 @@ for path in \
   "docs/plans/2026-06-14-location-independent-make.md" \
   "docs/plans/2026-06-16-sensor-process-exit-boundary.md" \
   "docs/plans/2026-06-17-active-stack-nil-context-guard.md" \
+  "docs/plans/2026-06-21-safe-make-root.md" \
+  "scripts/test-makefile-root.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -305,12 +307,17 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
 fi
 
 for make_contract in \
-  'override REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' \
+  'ifneq ($(origin MAKEFILE_LIST),file)' \
+  '$(error MAKEFILE_LIST must not be overridden)' \
+  'override REPO_ROOT := $(shell path=' \
+  '/usr/bin/dirname' \
+  '/bin/pwd -P' \
   '@cd "$(REPO_ROOT)" && for plan in docs/plans/*.md; do \' \
   'cd "$(REPO_ROOT)" && test -z "$$(gofmt -l *.go)"' \
   'cd "$(REPO_ROOT)" && go vet ./...' \
   'cd "$(REPO_ROOT)" && go test ./...' \
   'cd "$(REPO_ROOT)" && go test -race ./...' \
+  'cd "$(REPO_ROOT)" && scripts/test-makefile-root.sh' \
   'cd "$(REPO_ROOT)" && scripts/check-baseline.sh'; do
   if ! grep -Fq "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must preserve rooted recipe: $make_contract" >&2
@@ -318,7 +325,7 @@ for make_contract in \
   fi
 done
 
-for target in "docs:" "fmt:" "lint:" "vet:" "test:" "race:" "build:" "verify:" "check:"; do
+for target in "docs:" "fmt:" "lint:" "vet:" "test:" "race:" "build:" "root-test:" "verify:" "check:"; do
   if ! grep -Fq "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
@@ -335,10 +342,33 @@ if ! grep -Fq "go test -race ./..." "$MAKEFILE"; then
   exit 1
 fi
 
-if ! grep -Fq "verify: lint vet test race build docs" "$MAKEFILE"; then
+if ! grep -Fq "verify: lint vet test race build docs root-test" "$MAKEFILE"; then
   printf '%s\n' "make verify must include the vet and race gates." >&2
   exit 1
 fi
+
+for root_contract in \
+  'PurpleAir Go' \
+  '30 target/override cases' \
+  '2 MAKEFILE_LIST rejection cases' \
+  'MAKEFILE_LIST must not be overridden'; do
+  if ! grep -Fq "$root_contract" "$ROOT_DIR/scripts/test-makefile-root.sh"; then
+    printf '%s\n' "Makefile root test must preserve: $root_contract" >&2
+    exit 1
+  fi
+done
+
+for root_evidence in \
+  'Status: Completed' \
+  'nine pre-existing public Make targets plus the root regression gate' \
+  '30 target and `REPO_ROOT` override cases' \
+  'Command-line and environment `MAKEFILE_LIST` overrides failed closed' \
+  'make check'; do
+  if ! grep -Fq "$root_evidence" "$ROOT_DIR/docs/plans/2026-06-21-safe-make-root.md"; then
+    printf '%s\n' "safe Make root plan must preserve: $root_evidence" >&2
+    exit 1
+  fi
+done
 
 for documented in "go test ./..." "go test -race ./..." "go vet ./..." "make race" "make vet" "make check" "scripts/check-baseline.sh"; do
   if ! grep -Fq "$documented" "$README"; then

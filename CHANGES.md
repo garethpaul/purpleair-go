@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-21
+
+- Hardened all nine pre-existing Make gates against `MAKEFILE_LIST` and
+  `REPO_ROOT` redirection without changing the PurpleAir client API.
+
 ## 2026-06-19
 
 - Redacted request URLs from transport error strings while preserving the

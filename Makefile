@@ -1,6 +1,9 @@
-.PHONY: check build docs fmt lint race test vet verify
+.PHONY: check build docs fmt lint race root-test test vet verify
 
-override REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ifneq ($(origin MAKEFILE_LIST),file)
+$(error MAKEFILE_LIST must not be overridden)
+endif
+override REPO_ROOT := $(shell path='$(subst ','"'"',$(MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); directory=$$(/usr/bin/dirname -- "$$path"); CDPATH= cd -- "$$directory" && /bin/pwd -P)
 
 docs:
 	@cd "$(REPO_ROOT)" && for plan in docs/plans/*.md; do \
@@ -25,7 +28,10 @@ race:
 
 build: test
 
-verify: lint vet test race build docs
+root-test:
+	cd "$(REPO_ROOT)" && scripts/test-makefile-root.sh
+
+verify: lint vet test race build docs root-test
 
 check: verify
 	cd "$(REPO_ROOT)" && scripts/check-baseline.sh
