@@ -18,15 +18,14 @@ checkout despite the protected `REPO_ROOT` assignment.
 ## Work Completed
 
 - Reject command-line and environment replacement of `MAKEFILE_LIST`.
-- Canonicalize the checked-in Makefile directory through quoted POSIX tools.
-- Add coverage for all nine pre-existing public Make targets plus the root regression gate.
+- Canonicalize the checked-in Makefile directory with pinned POSIX tools and export it only to recipes.
+- Add executed coverage for all nine pre-existing public Make targets plus the root regression gate.
 - Include the root policy in `make verify` and `make check`.
 
 ## Verification Completed
 
-- `make fmt`, `make vet`, `make test`, `make race`, `make build`, `make docs`,
-  `make root-test`, `make verify`, and `make check` passed on Go 1.25.3.
-- All 30 target and `REPO_ROOT` override cases passed from a checkout path with
-  spaces and an apostrophe.
+- 70 executed target and authority cases kept quality commands inside the checkout.
+- Hostile checkout backticks were blocked and dollar-substitution paths failed closed.
+- `MAKEFILES`, `SHELL`, and `.SHELLFLAGS` authority were covered. Go commands remain repository-owned and `GO` environment values are non-authoritative.
 - Command-line and environment `MAKEFILE_LIST` overrides failed closed.
-- Go source, API behavior, module metadata, and dependency sums were unchanged.
+- `make check` remains the complete repository gate and no runtime source changed.

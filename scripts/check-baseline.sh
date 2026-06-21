@@ -307,18 +307,22 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
 fi
 
 for make_contract in \
+  'override SHELL := /bin/sh' \
+  'override .SHELLFLAGS := -c' \
+  '$(error MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone)' \
   'ifneq ($(origin MAKEFILE_LIST),file)' \
   '$(error MAKEFILE_LIST must not be overridden)' \
   'override REPO_ROOT := $(shell path=' \
+  'export REPO_ROOT' \
   '/usr/bin/dirname' \
   '/bin/pwd -P' \
-  '@cd "$(REPO_ROOT)" && for plan in docs/plans/*.md; do \' \
-  'cd "$(REPO_ROOT)" && test -z "$$(gofmt -l *.go)"' \
-  'cd "$(REPO_ROOT)" && go vet ./...' \
-  'cd "$(REPO_ROOT)" && go test ./...' \
-  'cd "$(REPO_ROOT)" && go test -race ./...' \
-  'cd "$(REPO_ROOT)" && scripts/test-makefile-root.sh' \
-  'cd "$(REPO_ROOT)" && scripts/check-baseline.sh'; do
+  '@cd "$$REPO_ROOT" && for plan in docs/plans/*.md; do \' \
+  'cd "$$REPO_ROOT" && test -z "$$(gofmt -l *.go)"' \
+  'cd "$$REPO_ROOT" && go vet ./...' \
+  'cd "$$REPO_ROOT" && go test ./...' \
+  'cd "$$REPO_ROOT" && go test -race ./...' \
+  'cd "$$REPO_ROOT" && scripts/test-makefile-root.sh' \
+  'cd "$$REPO_ROOT" && scripts/check-baseline.sh'; do
   if ! grep -Fq "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must preserve rooted recipe: $make_contract" >&2
     exit 1
@@ -349,7 +353,10 @@ fi
 
 for root_contract in \
   'PurpleAir Go' \
-  '30 target/override cases' \
+  '70 executed target/authority cases' \
+  'hostile backticks blocked' \
+  'dollar paths failed closed' \
+  '1 MAKEFILES preload rejection' \
   '2 MAKEFILE_LIST rejection cases' \
   'MAKEFILE_LIST must not be overridden'; do
   if ! grep -Fq "$root_contract" "$ROOT_DIR/scripts/test-makefile-root.sh"; then
@@ -361,7 +368,9 @@ done
 for root_evidence in \
   'Status: Completed' \
   'nine pre-existing public Make targets plus the root regression gate' \
-  '30 target and `REPO_ROOT` override cases' \
+  '70 executed target and authority cases' \
+  'Hostile checkout backticks were blocked and dollar-substitution paths failed closed' \
+  '`MAKEFILES`, `SHELL`, and `.SHELLFLAGS` authority were covered' \
   'Command-line and environment `MAKEFILE_LIST` overrides failed closed' \
   'make check'; do
   if ! grep -Fq "$root_evidence" "$ROOT_DIR/docs/plans/2026-06-21-safe-make-root.md"; then
