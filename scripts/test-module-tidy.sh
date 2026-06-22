@@ -24,18 +24,6 @@ expect_failure() {
 
 canonical="$TEMP_ROOT/canonical"
 copy_checkout "$canonical"
-(
-  cd "$canonical"
-  HTTP_PROXY=http://127.0.0.1:1 \
-    HTTPS_PROXY=http://127.0.0.1:1 \
-    ALL_PROXY=http://127.0.0.1:1 \
-    NO_PROXY=localhost,127.0.0.1,::1 \
-    GOPROXY=off \
-    GOSUMDB=off \
-    GOWORK=off \
-    GOFLAGS='' \
-    go mod tidy
-)
 "$canonical/scripts/check-module-tidy.sh"
 
 ci_cache="$TEMP_ROOT/ci-cache"
