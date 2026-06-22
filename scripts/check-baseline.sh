@@ -45,6 +45,8 @@ for path in \
   "docs/plans/2026-06-16-sensor-process-exit-boundary.md" \
   "docs/plans/2026-06-17-active-stack-nil-context-guard.md" \
   "docs/plans/2026-06-21-safe-make-root.md" \
+  "scripts/check-module-tidy.sh" \
+  "scripts/test-module-tidy.sh" \
   "scripts/test-makefile-root.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -454,6 +456,9 @@ for module_line in \
     exit 1
   fi
 done
+
+"$ROOT_DIR/scripts/check-module-tidy.sh"
+"$ROOT_DIR/scripts/test-module-tidy.sh"
 
 for ignored in "/bin/" "/dist/" "/build/" "*.test" "*.out" ".env" ".env.*" ".idea/" ".vscode/" "*.iml"; do
   if ! grep -Fq "$ignored" "$GITIGNORE"; then
