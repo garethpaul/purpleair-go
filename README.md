@@ -64,8 +64,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   must contain only ASCII decimal digits and represent positive integers;
   signed and non-ASCII forms are rejected before any request. Each response
   must preserve the requested sensor identity in at least one result. Every
-  decoded result must also use finite coordinates within latitude `[-90, 90]`
-  and longitude `[-180, 180]`.
+  decoded result must explicitly include both `Lat` and `Lon`, using finite
+  coordinates within latitude `[-90, 90]` and longitude `[-180, 180]`.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
   timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
   when a caller needs a different deadline.

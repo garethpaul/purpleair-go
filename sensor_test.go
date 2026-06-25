@@ -54,7 +54,7 @@ func TestSensorReturnsNilInsteadOfExitingOnError(t *testing.T) {
 func TestSensorReturnsDataOnSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Compatibility Sensor"}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Compatibility Sensor","Lat":0,"Lon":0}]}`))
 	}))
 	defer server.Close()
 
@@ -94,7 +94,7 @@ func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 		assert.Equal(t, purpleAirUserAgent, r.Header.Get("User-Agent"))
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Test Sensor"}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Test Sensor","Lat":0,"Lon":0}]}`))
 	}))
 	defer server.Close()
 
@@ -364,12 +364,12 @@ func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
 		},
 		"missing requested identity": {
 			statusCode:    http.StatusOK,
-			payload:       `{"results":[{"ID":17938}]}`,
+			payload:       `{"results":[{"ID":17938,"Lat":0,"Lon":0}]}`,
 			expectedError: "does not include requested sensor",
 		},
 		"success": {
 			statusCode: http.StatusOK,
-			payload:    `{"results":[{"ID":17937}]}`,
+			payload:    `{"results":[{"ID":17937,"Lat":0,"Lon":0}]}`,
 		},
 	}
 
@@ -401,7 +401,7 @@ func TestSensorWithErrorClosesResponseBodies(t *testing.T) {
 func TestSensorWithErrorReturnsCloseErrorsAfterSuccessfulDecode(t *testing.T) {
 	closeErr := errors.New("close failed")
 	body := &errorReadCloser{
-		Reader:   strings.NewReader(`{"results":[{"ID":17937}]}`),
+		Reader:   strings.NewReader(`{"results":[{"ID":17937,"Lat":0,"Lon":0}]}`),
 		closeErr: closeErr,
 	}
 	client := NewClient()
@@ -452,9 +452,9 @@ func TestSensorWithErrorPreservesPrimaryErrorsOverCloseErrors(t *testing.T) {
 
 func TestSensorWithErrorRejectsExcessiveResultCounts(t *testing.T) {
 	var payload strings.Builder
-	payload.WriteString(`{"results":[{"ID":17937}`)
+	payload.WriteString(`{"results":[{"ID":17937,"Lat":0,"Lon":0}`)
 	for index := 0; index < 1024; index++ {
-		payload.WriteString(`,{"ID":17937}`)
+		payload.WriteString(`,{"ID":17937,"Lat":0,"Lon":0}`)
 	}
 	payload.WriteString(`]}`)
 
@@ -483,7 +483,7 @@ func TestSensorWithErrorAcceptsMaximumResultCount(t *testing.T) {
 		if index > 0 {
 			payload.WriteByte(',')
 		}
-		payload.WriteString(`{"ID":17937}`)
+		payload.WriteString(`{"ID":17937,"Lat":0,"Lon":0}`)
 	}
 	payload.WriteString(`]}`)
 
@@ -520,6 +520,34 @@ func TestSensorWithErrorRejectsNonFiniteCoordinates(t *testing.T) {
 	assert.Nil(t, sensor)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "decode response body")
+}
+
+func TestSensorWithErrorRejectsMissingCoordinates(t *testing.T) {
+	for name, testCase := range map[string]struct {
+		payload       string
+		expectedIndex int
+	}{
+		"missing latitude":     {`{"results":[{"ID":17937,"Lon":0}]}`, 0},
+		"missing longitude":    {`{"results":[{"ID":17937,"Lat":0}]}`, 0},
+		"later missing result": {`{"results":[{"ID":17937,"Lat":0,"Lon":0},{"ID":17938,"Lat":1}]}`, 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := NewClient()
+			client.HTTPClient = &http.Client{
+				Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       ioutil.NopCloser(strings.NewReader(testCase.payload)),
+					}, nil
+				}),
+			}
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.Nil(t, sensor)
+			assert.EqualError(t, err, fmt.Sprintf("purpleair: decode response body: result %d is missing coordinates", testCase.expectedIndex))
+		})
+	}
 }
 
 func TestSensorWithErrorRejectsOutOfRangeCoordinates(t *testing.T) {
@@ -586,7 +614,7 @@ func TestSensorWithErrorAcceptsCoordinateBoundaries(t *testing.T) {
 func TestClientSupportsConcurrentSensorReuse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sensorID := req.URL.Query().Get("show")
-		_, _ = fmt.Fprintf(w, `{"results":[{"ID":%s}]}`, sensorID)
+		_, _ = fmt.Fprintf(w, `{"results":[{"ID":%s,"Lat":0,"Lon":0}]}`, sensorID)
 	}))
 	defer server.Close()
 
@@ -616,7 +644,7 @@ func TestClientSupportsConcurrentSensorReuse(t *testing.T) {
 }
 
 func TestSensorWithErrorRejectsDeclaredOversizedBodiesBeforeReading(t *testing.T) {
-	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937,"Lat":0,"Lon":0}]}`)}
 	body := &trackingReadCloser{Reader: reader}
 	client := NewClient()
 	client.HTTPClient = &http.Client{
@@ -638,7 +666,7 @@ func TestSensorWithErrorRejectsDeclaredOversizedBodiesBeforeReading(t *testing.T
 }
 
 func TestSensorWithErrorReadsBodiesDeclaredAtLimit(t *testing.T) {
-	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937}]}`)}
+	reader := &countingReader{reader: strings.NewReader(`{"results":[{"ID":17937,"Lat":0,"Lon":0}]}`)}
 	body := &trackingReadCloser{Reader: reader}
 	client := NewClient()
 	client.HTTPClient = &http.Client{
@@ -686,7 +714,7 @@ func TestSensorWithErrorRejectsInvalidResultIDs(t *testing.T) {
 		"missing":      {`{"results":[{"Label":"Missing ID"}]}`, 0},
 		"zero":         {`{"results":[{"ID":0,"Label":"Zero ID"}]}`, 0},
 		"negative":     {`{"results":[{"ID":-1,"Label":"Negative ID"}]}`, 0},
-		"later result": {`{"results":[{"ID":17937},{"ID":0}]}`, 1},
+		"later result": {`{"results":[{"ID":17937,"Lat":0,"Lon":0},{"ID":0}]}`, 1},
 	} {
 		t.Run(name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -713,7 +741,7 @@ func TestSensorWithErrorRejectsInvalidResultIDs(t *testing.T) {
 func TestSensorWithErrorAcceptsMultipleValidResultIDs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17937}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938,"Lat":0,"Lon":0},{"ID":17937,"Lat":0,"Lon":0}]}`))
 	}))
 	defer server.Close()
 
@@ -751,7 +779,7 @@ func TestSensorWithErrorRejectsInvalidRequestedSensorIDs(t *testing.T) {
 func TestSensorWithErrorRejectsMismatchedResponseSensorIDs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"ID":17938},{"ID":17939}]}`))
+		_, _ = w.Write([]byte(`{"results":[{"ID":17938,"Lat":0,"Lon":0},{"ID":17939,"Lat":0,"Lon":0}]}`))
 	}))
 	defer server.Close()
 

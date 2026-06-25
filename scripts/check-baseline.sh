@@ -447,6 +447,34 @@ for guidance in "make check" "go test -race ./..." "API keys" "live-network"; do
     exit 1
   fi
 done
+
+for coordinate_contract in \
+  'Lat *float64 `json:"Lat"`' \
+  'Lon *float64 `json:"Lon"`' \
+  'result %d is missing coordinates'; do
+  if ! grep -Fq "$coordinate_contract" "$ROOT_DIR/sensor.go"; then
+    printf '%s\n' "Sensor decoder must preserve required coordinate contract: $coordinate_contract" >&2
+    exit 1
+  fi
+done
+
+for coordinate_test in \
+  "TestSensorWithErrorRejectsMissingCoordinates" \
+  '"missing latitude"' \
+  '"missing longitude"' \
+  '"later missing result"'; do
+  if ! grep -Fq "$coordinate_test" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Sensor tests must preserve missing-coordinate coverage: $coordinate_test" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "explicit" "$document" || ! grep -Fq "coordinate" "$document"; then
+    printf '%s\n' "$document must document explicit sensor coordinates." >&2
+    exit 1
+  fi
+done
 for module_line in \
   "module github.com/garethpaul/purpleair-go" \
   "go 1.13" \

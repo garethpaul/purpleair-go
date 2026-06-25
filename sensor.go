@@ -184,9 +184,26 @@ func decodeSensorResults(rawResults json.RawMessage) ([]Result, error) {
 			return nil, fmt.Errorf("too many sensor results (maximum %d)", maxSensorResults)
 		}
 
-		var result Result
-		if err := decoder.Decode(&result); err != nil {
+		var rawResult json.RawMessage
+		if err := decoder.Decode(&rawResult); err != nil {
 			return nil, err
+		}
+
+		var result Result
+		if err := json.Unmarshal(rawResult, &result); err != nil {
+			return nil, err
+		}
+		if result.ID > 0 {
+			var coordinates struct {
+				Lat *float64 `json:"Lat"`
+				Lon *float64 `json:"Lon"`
+			}
+			if err := json.Unmarshal(rawResult, &coordinates); err != nil {
+				return nil, err
+			}
+			if coordinates.Lat == nil || coordinates.Lon == nil {
+				return nil, fmt.Errorf("result %d is missing coordinates", len(results))
+			}
 		}
 		if math.IsNaN(result.Lat) || math.IsInf(result.Lat, 0) || math.IsNaN(result.Lon) || math.IsInf(result.Lon, 0) {
 			return nil, fmt.Errorf("result %d has non-finite coordinates", len(results))

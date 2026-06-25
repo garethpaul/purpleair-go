@@ -47,6 +47,8 @@ Priority:
 - Reject non-positive sensor IDs in decoded response records
 - Require ASCII decimal requested sensor IDs before network access
 - Preserve the requested sensor identity in decoded response records
+- Require explicit coordinates through latitude and longitude fields in decoded
+  response records
 - Wrap transport failures with PurpleAir-specific request context
 - Wrap response read and decode failures with inspectable PurpleAir context;
   all non-nil response bodies are closed across success and failure paths

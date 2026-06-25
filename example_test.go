@@ -9,7 +9,7 @@ import (
 func ExampleClient_SensorWithError() {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = fmt.Fprintln(w, `{"results":[{"ID":17937,"Label":"Example Sensor"}]}`)
+		_, _ = fmt.Fprintln(w, `{"results":[{"ID":17937,"Label":"Example Sensor","Lat":0,"Lon":0}]}`)
 	}))
 	defer server.Close()
 
