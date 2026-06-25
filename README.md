@@ -63,7 +63,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   contain no sensor results or results with non-positive sensor IDs. Sensor IDs
   must contain only ASCII decimal digits and represent positive integers;
   signed and non-ASCII forms are rejected before any request. Each response
-  must preserve the requested sensor identity in at least one result.
+  must preserve the requested sensor identity in at least one result. Every
+  decoded result must also use finite coordinates within latitude `[-90, 90]`
+  and longitude `[-180, 180]`.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
   timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
   when a caller needs a different deadline.
@@ -181,6 +183,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-19-response-boundary-review.md` for request URL
   secrecy, close-error precedence, bounded result decoding, and concurrent
   client reuse evidence.
+- See `docs/plans/2026-06-25-sensor-coordinate-range-validation.md` for decoded
+  sensor coordinate range validation.
 
 ## Contributing
 

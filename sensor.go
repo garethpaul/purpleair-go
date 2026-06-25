@@ -191,6 +191,9 @@ func decodeSensorResults(rawResults json.RawMessage) ([]Result, error) {
 		if math.IsNaN(result.Lat) || math.IsInf(result.Lat, 0) || math.IsNaN(result.Lon) || math.IsInf(result.Lon, 0) {
 			return nil, fmt.Errorf("result %d has non-finite coordinates", len(results))
 		}
+		if result.Lat < -90 || result.Lat > 90 || result.Lon < -180 || result.Lon > 180 {
+			return nil, fmt.Errorf("result %d has out-of-range coordinates (%g, %g)", len(results), result.Lat, result.Lon)
+		}
 		results = append(results, result)
 	}
 
