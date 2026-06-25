@@ -48,8 +48,13 @@ func isSupportedBaseURL(baseURL string) bool {
 
 func defaultHTTPClient() *http.Client {
 	return &http.Client{
-		Timeout: defaultHTTPTimeout,
+		Timeout:       defaultHTTPTimeout,
+		CheckRedirect: rejectRedirect,
 	}
+}
+
+func rejectRedirect(*http.Request, []*http.Request) error {
+	return http.ErrUseLastResponse
 }
 
 func (c *Client) httpClient() *http.Client {

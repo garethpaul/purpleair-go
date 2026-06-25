@@ -28,6 +28,8 @@ Priority:
 - Avoid hiding HTTP timeouts and user-agent behavior
 - Keep the default total HTTP timeout at a 30-second boundary while preserving
   custom clients and caller-controlled context deadlines
+- Surface redirects from package-owned clients as immediate status errors while
+  preserving caller-provided HTTP redirect policy
 - Maintain module metadata, mocked HTTP tests, `make lint`, `make vet`,
   `make race`, `make build`, and `make check`
 - Run the canonical gate on current supported Go patch releases in hosted CI
@@ -57,7 +59,8 @@ Priority:
 Next priorities:
 
 - Migrate callers from `Sensor` to `SensorWithError`
-- Document endpoint assumptions and API availability
+- Design modern authenticated PurpleAir API support without changing the
+  legacy map-response model silently
 
 Contribution rules:
 

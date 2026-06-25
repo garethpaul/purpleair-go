@@ -1,5 +1,123 @@
 # Changes
 
+## 2026-06-25 23:53 UTC - P1 - Clear redirect-policy PR for merge
+
+### Summary
+
+Completed final branch triage for pull request #14 and cleared it for merge
+after the requested Codex review was unavailable because the nested CLI lacks
+authentication.
+
+### Work completed
+
+- Re-read the complete branch diff and confirmed the redirect policy remains
+  limited to package-owned HTTP clients.
+- Confirmed caller-provided HTTP clients retain their timeout and redirect
+  behavior unchanged.
+- Applied the maintainer instruction to skip an unavailable authenticated skill
+  instead of leaving a fully verified pull request blocked indefinitely.
+
+### Threads
+
+- Reviewed: PurpleAir PR triage — confirmed the branch is current, clean,
+  mergeable, and has no competing issue, review, or TODO work.
+
+### Files changed
+
+- `CHANGES.md` — recorded final review evidence and the authenticated-skill
+  exception used for pull request #14.
+
+### Validation
+
+- `git diff --check origin/master...HEAD` — passed.
+- Manual branch review — confirmed the default client rejects redirects with
+  `http.ErrUseLastResponse`, caller clients are preserved, and the regression
+  test proves the redirect destination is never contacted.
+- Pull request #14 — Go 1.25.11, Go 1.26.4, and all CodeQL checks passed;
+  GitHub reports the pull request mergeable with a clean merge state.
+- Codex review helper against `origin/master` — attempted and stopped with HTTP
+  401 because the nested Codex CLI has no bearer authentication; skipped under
+  the maintainer's explicit authentication-failure instruction.
+
+### Bugs / findings
+
+- No additional code defects found during final review.
+
+### Blockers
+
+- None.
+
+### Next action
+
+- Merge pull request #14, synchronize local `master`, and continue with the next
+  green maintenance pull request.
+
+## 2026-06-25 23:36 UTC - P1 - Surface legacy endpoint redirects immediately
+
+### Summary
+
+Stopped package-owned HTTP clients from following PurpleAir endpoint redirects
+so the legacy default path returns an immediate status error instead of moving
+to another host and potentially waiting for the full timeout.
+
+### Work completed
+
+- Added an `http.ErrUseLastResponse` redirect policy to constructor, nil, and
+  zero-value fallback clients.
+- Preserved caller-provided `HTTPClient` redirect and timeout policy unchanged.
+- Added deterministic two-server coverage proving the redirect destination is
+  never contacted and the original HTTP 302 reaches existing status handling.
+- Documented the legacy default endpoint, current API incompatibility, and the
+  separate modernization boundary.
+
+### Threads
+
+- None. Repository tracing, official Go redirect semantics, current PurpleAir
+  API guidance, and a manual endpoint probe provided sufficient direct evidence.
+
+### Files changed
+
+- `client.go` and `client_test.go` — configured and tested package-owned
+  redirect rejection while preserving caller clients.
+- `sensor_test.go` — proved redirects stop before a second host request.
+- `README.md`, `SECURITY.md`, `VISION.md`, and
+  `docs/plans/2026-06-25-default-redirect-policy.md` — documented endpoint and
+  policy assumptions.
+- `scripts/check-baseline.sh` — protected the source, tests, plan, and guidance.
+
+### Validation
+
+- Focused redirect tests — failed before implementation because all default
+  clients lacked a redirect hook and the destination server was contacted;
+  passed after the `ErrUseLastResponse` policy was added.
+- Go 1.25.11 container `make check` — passed formatting, vet, unit tests,
+  race detection, build-through-test, completed-plan checks, 70-case Make root
+  authority coverage, baseline contracts, and module-tidy mutation tests.
+- Pull request #14 — hosted Go 1.25.11 and Go 1.26.4 verification plus CodeQL
+  analysis for Actions and Go all passed.
+- Codex review helper against `origin/master` — parallel container `make check`
+  passed, but the nested Codex CLI stopped before analysis with HTTP 401
+  because no local Codex identity is authenticated.
+- Manual non-credentialed availability probe — the legacy default URL returned
+  HTTP 302 to `purpleair-over-quota-2.appspot.com`; following that redirect
+  timed out after 15 seconds with no response body.
+
+### Bugs / findings
+
+- Go's default client follows redirects. That converted the legacy endpoint's
+  immediate redirect into unrelated follow-up behavior and hid the actionable
+  original status from callers.
+
+### Blockers
+
+- The required Codex review cannot complete until the nested Codex CLI is
+  authenticated; do not merge before a clean review.
+
+### Next action
+
+- Authenticate the nested Codex CLI, rerun branch review against `master`, and
+  merge pull request #14 only if that review is clean.
+
 ## 2026-06-25
 
 - **Timestamp:** 2026-06-25 10:15 UTC

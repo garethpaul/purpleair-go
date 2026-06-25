@@ -111,6 +111,32 @@ func TestSensorWithErrorUsesClientConfiguration(t *testing.T) {
 	assert.Equal(t, "Test Sensor", sensor.Results[0].Label)
 }
 
+func TestSensorWithErrorRejectsRedirectsBeforeFollowing(t *testing.T) {
+	destinationRequests := 0
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		destinationRequests++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[{"ID":17937,"Label":"Redirected Sensor","Lat":0,"Lon":0}]}`))
+	}))
+	defer destination.Close()
+
+	sourceRequests := 0
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sourceRequests++
+		http.Redirect(w, r, destination.URL+"/json", http.StatusFound)
+	}))
+	defer source.Close()
+
+	client := NewClientWithBaseURL(source.URL + "/json")
+
+	sensor, err := client.SensorWithError("17937")
+
+	assert.Nil(t, sensor)
+	assert.EqualError(t, err, "purpleair: unexpected status 302")
+	assert.Equal(t, 1, sourceRequests)
+	assert.Equal(t, 0, destinationRequests)
+}
+
 func TestSensorWithContextPropagatesCancellation(t *testing.T) {
 	type contextKey string
 	const requestMarker contextKey = "request-marker"

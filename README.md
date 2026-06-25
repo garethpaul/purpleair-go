@@ -50,6 +50,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
+- `NewClient()` retains the historical `https://www.purpleair.com/json?show=`
+  map-response contract. This is a legacy endpoint, not PurpleAir's current
+  authenticated API, and a manual availability probe on June 25, 2026 received
+  a redirect to an over-quota host. Do not assume the default endpoint is
+  available; use a reviewed compatible endpoint or proxy until modern API
+  support is designed with its different authentication and response schema.
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls. The compatibility
@@ -67,8 +73,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   decoded result must explicitly include both `Lat` and `Lon`, using finite
   coordinates within latitude `[-90, 90]` and longitude `[-180, 180]`.
 - `NewClient()`, nil clients, and zero-value clients use a 30-second total HTTP
-  timeout by default. Assign a custom `HTTPClient` or use `SensorWithContext`
-  when a caller needs a different deadline.
+  timeout and do not follow redirects by default. Redirect responses therefore
+  return an immediate `unexpected status` error instead of moving the request
+  to another host. Assign a custom `HTTPClient` to retain caller-selected
+  redirect and timeout policy, or use `SensorWithContext` for a shorter
+  deadline.
 - Blank custom base URLs fall back to the default PurpleAir JSON endpoint, and
   existing query parameters are preserved when the `show` sensor ID is added.
 - Custom base URLs must be absolute `http` or `https` URLs with a host; invalid
@@ -151,6 +160,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   sensor ID and timeout guard baseline.
 - See `docs/plans/2026-06-12-default-http-timeout-boundary.md` for the bounded
   30-second default and caller override contract.
+- See `docs/plans/2026-06-25-default-redirect-policy.md` for the legacy endpoint
+  availability evidence and package-owned redirect policy.
 - See `docs/plans/2026-06-12-sensor-response-identity.md` for positive request
   IDs and requested sensor identity validation.
 - See `docs/plans/2026-06-08-sensor-with-error-examples.md` for the executable
