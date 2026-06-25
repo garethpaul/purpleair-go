@@ -2,6 +2,33 @@
 
 ## 2026-06-25
 
+- **Timestamp:** 2026-06-25 10:15 UTC
+- **Priority:** P2 response integrity.
+- **Summary:** Rejected PurpleAir results that omit latitude or longitude
+  instead of silently interpreting missing JSON fields as coordinate zero.
+- **Work:** Added indexed missing-coordinate errors, preserved invalid-ID error
+  precedence, updated successful fixtures to state coordinates explicitly,
+  extended baseline contracts, and documented the decoder boundary.
+- **Threads:** None.
+- **Files changed:** `sensor.go`, `sensor_test.go`, `example_test.go`,
+  `scripts/check-baseline.sh`, `README.md`, `SECURITY.md`, `VISION.md`,
+  `CHANGES.md`, and
+  `docs/plans/2026-06-25-required-sensor-coordinate-fields.md`.
+- **Validation:** The focused test failed before implementation and passed
+  afterward; full package tests passed in a Go 1.25 container. The first
+  `make check` exposed a documentation-contract wording mismatch, the second
+  exposed container Git ownership protection, and the final ephemeral
+  safe-directory run passed the complete canonical gate.
+- **Finding:** Go JSON decoding converted absent numeric coordinate fields to
+  valid-looking zero values, allowing incomplete upstream records through the
+  existing finite and range checks.
+- **Blockers:** None. The host has no Go toolchain, so Docker supplied the
+  isolated validation environment.
+- **Next action:** Complete `make check`, open a focused pull request, run
+  Codex review and hosted checks, and merge only if clean.
+
+## 2026-06-25
+
 - **Timestamp:** 2026-06-25 06:14 UTC
 - **Priority:** P2 correctness hardening.
 - **Summary:** Rejected finite PurpleAir sensor coordinates outside valid
