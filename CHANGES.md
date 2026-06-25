@@ -1,5 +1,29 @@
 # Changes
 
+## 2026-06-25
+
+- **Timestamp:** 2026-06-25 06:14 UTC
+- **Priority:** P2 correctness hardening.
+- **Summary:** Rejected finite PurpleAir sensor coordinates outside valid
+  geographic latitude and longitude ranges.
+- **Work:** Added per-result range validation, regression coverage for each
+  invalid direction and a later invalid result, exact endpoint acceptance
+  coverage, public usage/security documentation, and an implementation plan.
+- **Threads:** None.
+- **Files changed:** `sensor.go`, `sensor_test.go`, `README.md`,
+  `SECURITY.md`, `CHANGES.md`, and
+  `docs/plans/2026-06-25-sensor-coordinate-range-validation.md`.
+- **Validation:** The focused test failed before implementation and passed
+  afterward; `make lint vet test race build root-test` and `make check`
+  passed in a Go 1.25 container.
+- **Finding:** The decoder already rejected non-finite numbers but treated
+  finite impossible locations such as latitude 91 as valid sensor data.
+- **Blockers:** Required Codex review remains unavailable because the managed
+  CLI requires an active ChatGPT login and rejects the configured API-key-only
+  authentication path.
+- **Next action:** Open a focused pull request, run hosted checks, and retry the
+  required Codex review before considering merge.
+
 ## 2026-06-21
 
 - Hardened all nine pre-existing Make gates against `MAKEFILE_LIST` and

@@ -522,6 +522,67 @@ func TestSensorWithErrorRejectsNonFiniteCoordinates(t *testing.T) {
 	assert.Contains(t, err.Error(), "decode response body")
 }
 
+func TestSensorWithErrorRejectsOutOfRangeCoordinates(t *testing.T) {
+	for name, testCase := range map[string]struct {
+		payload       string
+		expectedIndex int
+	}{
+		"latitude below minimum":  {`{"results":[{"ID":17937,"Lat":-90.1,"Lon":0}]}`, 0},
+		"latitude above maximum":  {`{"results":[{"ID":17937,"Lat":90.1,"Lon":0}]}`, 0},
+		"longitude below minimum": {`{"results":[{"ID":17937,"Lat":0,"Lon":-180.1}]}`, 0},
+		"longitude above maximum": {`{"results":[{"ID":17937,"Lat":0,"Lon":180.1}]}`, 0},
+		"later invalid result":    {`{"results":[{"ID":17937,"Lat":0,"Lon":0},{"ID":17938,"Lat":91,"Lon":0}]}`, 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := NewClient()
+			client.HTTPClient = &http.Client{
+				Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       ioutil.NopCloser(strings.NewReader(testCase.payload)),
+					}, nil
+				}),
+			}
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.Nil(t, sensor)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), fmt.Sprintf("result %d has out-of-range coordinates", testCase.expectedIndex))
+		})
+	}
+}
+
+func TestSensorWithErrorAcceptsCoordinateBoundaries(t *testing.T) {
+	for name, testCase := range map[string]struct {
+		payload string
+		lat     float64
+		lon     float64
+	}{
+		"minimum boundaries": {`{"results":[{"ID":17937,"Lat":-90,"Lon":-180}]}`, -90, -180},
+		"maximum boundaries": {`{"results":[{"ID":17937,"Lat":90,"Lon":180}]}`, 90, 180},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := NewClient()
+			client.HTTPClient = &http.Client{
+				Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       ioutil.NopCloser(strings.NewReader(testCase.payload)),
+					}, nil
+				}),
+			}
+
+			sensor, err := client.SensorWithError("17937")
+
+			assert.NoError(t, err)
+			assert.Len(t, sensor.Results, 1)
+			assert.Equal(t, testCase.lat, sensor.Results[0].Lat)
+			assert.Equal(t, testCase.lon, sensor.Results[0].Lon)
+		})
+	}
+}
+
 func TestClientSupportsConcurrentSensorReuse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sensorID := req.URL.Query().Get("show")

@@ -84,6 +84,9 @@ Requested sensor IDs must contain only ASCII decimal digits; signed and
 non-ASCII forms are rejected before any network request.
 Responses must preserve the requested sensor identity in at least one positive
 result so proxied, stale, or malformed data is not attributed to another sensor.
+Decoded results must use finite coordinates within latitude `[-90, 90]` and
+longitude `[-180, 180]` so malformed upstream locations are not accepted as
+valid sensor data.
 
 ## Dependency and Supply Chain Security
 
