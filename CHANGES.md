@@ -41,6 +41,11 @@ to another host and potentially waiting for the full timeout.
 - Go 1.25.11 container `make check` — passed formatting, vet, unit tests,
   race detection, build-through-test, completed-plan checks, 70-case Make root
   authority coverage, baseline contracts, and module-tidy mutation tests.
+- Pull request #14 — hosted Go 1.25.11 and Go 1.26.4 verification plus CodeQL
+  analysis for Actions and Go all passed.
+- Codex review helper against `origin/master` — parallel container `make check`
+  passed, but the nested Codex CLI stopped before analysis with HTTP 401
+  because no local Codex identity is authenticated.
 - Manual non-credentialed availability probe — the legacy default URL returned
   HTTP 302 to `purpleair-over-quota-2.appspot.com`; following that redirect
   timed out after 15 seconds with no response body.
@@ -53,13 +58,13 @@ to another host and potentially waiting for the full timeout.
 
 ### Blockers
 
-- The required nested Codex review remains unauthenticated and may stop before
-  analysis with HTTP 401.
+- The required Codex review cannot complete until the nested Codex CLI is
+  authenticated; do not merge before a clean review.
 
 ### Next action
 
-- Run `make check`, open a focused pull request, require hosted checks and
-  Codex review, and merge only after both are clean.
+- Authenticate the nested Codex CLI, rerun branch review against `master`, and
+  merge pull request #14 only if that review is clean.
 
 ## 2026-06-25
 

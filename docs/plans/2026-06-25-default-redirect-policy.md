@@ -103,6 +103,11 @@ git commit -m "fix: reject default client redirects"
 - Go 1.25.11 container `make check` passed formatting, vet, unit tests, race
   detection, build-through-test, completed-plan checks, 70-case Make root
   authority coverage, baseline contracts, and module-tidy mutation tests.
+- Pull request #14 passed hosted Go 1.25.11 and Go 1.26.4 verification plus
+  CodeQL analysis for Actions and Go.
+- The Codex review helper's parallel container gate passed, but the nested
+  Codex CLI returned HTTP 401 before review analysis because it is not
+  authenticated locally.
 - The canonical automated gate uses only mocked HTTP servers; the one live
   availability probe was a separate manual diagnostic and is not part of
   automated validation.
