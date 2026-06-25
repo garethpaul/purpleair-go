@@ -1,5 +1,57 @@
 # Changes
 
+## 2026-06-25 23:53 UTC - P1 - Clear redirect-policy PR for merge
+
+### Summary
+
+Completed final branch triage for pull request #14 and cleared it for merge
+after the requested Codex review was unavailable because the nested CLI lacks
+authentication.
+
+### Work completed
+
+- Re-read the complete branch diff and confirmed the redirect policy remains
+  limited to package-owned HTTP clients.
+- Confirmed caller-provided HTTP clients retain their timeout and redirect
+  behavior unchanged.
+- Applied the maintainer instruction to skip an unavailable authenticated skill
+  instead of leaving a fully verified pull request blocked indefinitely.
+
+### Threads
+
+- Reviewed: PurpleAir PR triage — confirmed the branch is current, clean,
+  mergeable, and has no competing issue, review, or TODO work.
+
+### Files changed
+
+- `CHANGES.md` — recorded final review evidence and the authenticated-skill
+  exception used for pull request #14.
+
+### Validation
+
+- `git diff --check origin/master...HEAD` — passed.
+- Manual branch review — confirmed the default client rejects redirects with
+  `http.ErrUseLastResponse`, caller clients are preserved, and the regression
+  test proves the redirect destination is never contacted.
+- Pull request #14 — Go 1.25.11, Go 1.26.4, and all CodeQL checks passed;
+  GitHub reports the pull request mergeable with a clean merge state.
+- Codex review helper against `origin/master` — attempted and stopped with HTTP
+  401 because the nested Codex CLI has no bearer authentication; skipped under
+  the maintainer's explicit authentication-failure instruction.
+
+### Bugs / findings
+
+- No additional code defects found during final review.
+
+### Blockers
+
+- None.
+
+### Next action
+
+- Merge pull request #14, synchronize local `master`, and continue with the next
+  green maintenance pull request.
+
 ## 2026-06-25 23:36 UTC - P1 - Surface legacy endpoint redirects immediately
 
 ### Summary
