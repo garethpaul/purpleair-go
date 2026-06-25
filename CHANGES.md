@@ -1,5 +1,66 @@
 # Changes
 
+## 2026-06-25 23:36 UTC - P1 - Surface legacy endpoint redirects immediately
+
+### Summary
+
+Stopped package-owned HTTP clients from following PurpleAir endpoint redirects
+so the legacy default path returns an immediate status error instead of moving
+to another host and potentially waiting for the full timeout.
+
+### Work completed
+
+- Added an `http.ErrUseLastResponse` redirect policy to constructor, nil, and
+  zero-value fallback clients.
+- Preserved caller-provided `HTTPClient` redirect and timeout policy unchanged.
+- Added deterministic two-server coverage proving the redirect destination is
+  never contacted and the original HTTP 302 reaches existing status handling.
+- Documented the legacy default endpoint, current API incompatibility, and the
+  separate modernization boundary.
+
+### Threads
+
+- None. Repository tracing, official Go redirect semantics, current PurpleAir
+  API guidance, and a manual endpoint probe provided sufficient direct evidence.
+
+### Files changed
+
+- `client.go` and `client_test.go` — configured and tested package-owned
+  redirect rejection while preserving caller clients.
+- `sensor_test.go` — proved redirects stop before a second host request.
+- `README.md`, `SECURITY.md`, `VISION.md`, and
+  `docs/plans/2026-06-25-default-redirect-policy.md` — documented endpoint and
+  policy assumptions.
+- `scripts/check-baseline.sh` — protected the source, tests, plan, and guidance.
+
+### Validation
+
+- Focused redirect tests — failed before implementation because all default
+  clients lacked a redirect hook and the destination server was contacted;
+  passed after the `ErrUseLastResponse` policy was added.
+- Go 1.25.11 container `make check` — passed formatting, vet, unit tests,
+  race detection, build-through-test, completed-plan checks, 70-case Make root
+  authority coverage, baseline contracts, and module-tidy mutation tests.
+- Manual non-credentialed availability probe — the legacy default URL returned
+  HTTP 302 to `purpleair-over-quota-2.appspot.com`; following that redirect
+  timed out after 15 seconds with no response body.
+
+### Bugs / findings
+
+- Go's default client follows redirects. That converted the legacy endpoint's
+  immediate redirect into unrelated follow-up behavior and hid the actionable
+  original status from callers.
+
+### Blockers
+
+- The required nested Codex review remains unauthenticated and may stop before
+  analysis with HTTP 401.
+
+### Next action
+
+- Run `make check`, open a focused pull request, require hosted checks and
+  Codex review, and merge only after both are clean.
+
 ## 2026-06-25
 
 - **Timestamp:** 2026-06-25 10:15 UTC

@@ -57,10 +57,33 @@ func TestNilClientUsesDefaultTimeout(t *testing.T) {
 }
 
 func TestClientPreservesCallerProvidedHTTPTimeout(t *testing.T) {
-	customHTTPClient := &http.Client{Timeout: 2 * time.Minute}
+	redirectPolicy := func(*http.Request, []*http.Request) error {
+		return nil
+	}
+	customHTTPClient := &http.Client{
+		Timeout:       2 * time.Minute,
+		CheckRedirect: redirectPolicy,
+	}
 	client := NewClient()
 	client.HTTPClient = customHTTPClient
 
 	assert.Same(t, customHTTPClient, client.httpClient())
 	assert.Equal(t, 2*time.Minute, client.httpClient().Timeout)
+	assert.NotNil(t, client.httpClient().CheckRedirect)
+}
+
+func TestDefaultHTTPClientRejectsRedirects(t *testing.T) {
+	var nilClient *Client
+	clients := map[string]*http.Client{
+		"constructor": NewClient().HTTPClient,
+		"zero value":  (&Client{}).httpClient(),
+		"nil client":  nilClient.httpClient(),
+	}
+
+	for name, httpClient := range clients {
+		t.Run(name, func(t *testing.T) {
+			assert.NotNil(t, httpClient.CheckRedirect)
+			assert.Equal(t, http.ErrUseLastResponse, httpClient.CheckRedirect(nil, nil))
+		})
+	}
 }

@@ -60,8 +60,14 @@ requests so applications can stop work before the default client timeout.
 The active-stack nil context guard rejects missing caller context before
 request construction without attempting an HTTP request.
 The default client uses a 30-second timeout for constructor, nil, and zero-value
-clients. Callers may provide a custom `HTTPClient` or a shorter context deadline
+clients and rejects redirects before sending a follow-up request to another
+host. The redirect response is returned to the existing non-2xx and body-close
+path. Callers may provide a custom `HTTPClient` or a shorter context deadline
 without the package replacing their policy.
+The default `www.purpleair.com/json?show=` URL is a legacy map endpoint, not
+the current authenticated PurpleAir API. Its availability must not be assumed,
+and modern API keys or schemas must not be bolted onto this compatibility path
+without a separate public API and security review.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 Responses with a declared Content-Length above the limit are rejected before

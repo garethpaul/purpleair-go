@@ -45,6 +45,7 @@ for path in \
   "docs/plans/2026-06-16-sensor-process-exit-boundary.md" \
   "docs/plans/2026-06-17-active-stack-nil-context-guard.md" \
   "docs/plans/2026-06-21-safe-make-root.md" \
+  "docs/plans/2026-06-25-default-redirect-policy.md" \
   "scripts/check-module-tidy.sh" \
   "scripts/test-module-tidy.sh" \
   "scripts/test-makefile-root.sh" \
@@ -211,6 +212,33 @@ if ! grep -Fq "defaultHTTPTimeout = 30 * time.Second" "$ROOT_DIR/client.go" ||
   printf '%s\n' "Client timeout tests must preserve the 30-second default and caller overrides." >&2
   exit 1
 fi
+
+for redirect_contract in \
+  "CheckRedirect: rejectRedirect" \
+  "return http.ErrUseLastResponse"; do
+  if ! grep -Fq "$redirect_contract" "$ROOT_DIR/client.go"; then
+    printf '%s\n' "Default HTTP client must preserve redirect rejection: $redirect_contract" >&2
+    exit 1
+  fi
+done
+
+for redirect_test in \
+  "TestDefaultHTTPClientRejectsRedirects" \
+  "TestSensorWithErrorRejectsRedirectsBeforeFollowing" \
+  'assert.EqualError(t, err, "purpleair: unexpected status 302")' \
+  "assert.Equal(t, 0, destinationRequests)"; do
+  if ! grep -Fq "$redirect_test" "$ROOT_DIR/client_test.go" "$ROOT_DIR/sensor_test.go"; then
+    printf '%s\n' "Redirect tests must preserve: $redirect_test" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fiq "legacy" "$document" || ! grep -Fiq "redirect" "$document"; then
+    printf '%s\n' "$document must document the legacy endpoint and redirect boundary." >&2
+    exit 1
+  fi
+done
 
 for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
   if ! grep -Fq "30-second" "$document"; then
