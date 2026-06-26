@@ -55,13 +55,15 @@ Priority:
 - Wrap response read and decode failures with inspectable PurpleAir context;
   all non-nil response bodies are closed across success and failure paths
 - Keep GitHub Actions aligned with the mocked `make check` baseline
+- Keep authenticated `DataAPIClient` credentials, typed responses, point-aware
+  no-retry behavior, and legacy `Client` compatibility explicitly separated
 - `SensorWithError` is the preferred default for repository examples and new
   callers; direct `Sensor` calls remain confined to compatibility tests.
 
 Next priorities:
 
-- Implement phase 1 of the completed authenticated Data API design as a separate
-  client without changing the legacy map-response model
+- No unclaimed roadmap item; select future work from reproduced defects,
+  provider API changes, dependency advisories, or reviewed caller needs.
 
 Contribution rules:
 

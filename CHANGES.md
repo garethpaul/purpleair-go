@@ -1,5 +1,44 @@
 # Changes
 
+## 2026-06-26 06:30 UTC - P1 - Implement authenticated Data API client
+
+### Summary
+
+Implemented opt-in authenticated real-time sensor access without changing the
+legacy map endpoint, constructors, result model, or compatibility behavior.
+
+### Work completed
+
+- Added `DataAPIClient`, `SensorDataOptions`, `SensorDataResponse`, and the
+  fixed typed phase-one sensor field model.
+- Sent organization keys only in `X-API-Key` and optional private sensor keys
+  only in the request query while redacting both from returned failures and
+  their inspectable unwrap chains.
+- Added caller context propagation, positive sensor-index validation, the
+  package 30-second timeout and redirect rejection, and caller HTTP policy
+  preservation.
+- Added 1 MiB bounded reads, declared-size preflight, strict single-JSON
+  decoding, response-body lifecycle handling, detail-safe statuses, identity,
+  timestamp, coordinate, and finite PM2.5 validation.
+- Preserved point-aware no-retry behavior and the entire legacy `Client` path.
+- Added authenticated adoption, security, baseline, and completed-plan records.
+
+### Threads
+
+- Continued the approved authenticated Data API implementation plan.
+
+### Files changed
+
+- `data_api.go` and `data_api_test.go` — public client and transport coverage.
+- README, security, vision, agent, changelog, baseline, and completed plan.
+
+### Validation
+
+- Focused constructor, credential, request, response, lifecycle, redaction,
+  and validation tests passed in the official Go 1.25 container.
+- Full `make check` passed under Go 1.25.11 and Go 1.26.4, including format,
+  vet, unit, race, 70 Make authority cases, baseline, and module-tidy checks.
+
 ## 2026-06-25 23:21 PDT - P2 - Design authenticated Data API support
 
 ### Summary
