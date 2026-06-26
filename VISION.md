@@ -57,6 +57,7 @@ Priority:
 - Keep GitHub Actions aligned with the mocked `make check` baseline
 - Keep authenticated `DataAPIClient` credentials, typed responses, point-aware
   no-retry behavior, and legacy `Client` compatibility explicitly separated
+- Keep authenticated redirect rejection package-owned across custom HTTP clients
 - `SensorWithError` is the preferred default for repository examples and new
   callers; direct `Sensor` calls remain confined to compatibility tests.
 

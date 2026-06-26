@@ -41,10 +41,14 @@ func TestDataAPIClientPreservesCallerHTTPClient(t *testing.T) {
 	client, err := NewDataAPIClient("api-read-key")
 	assert.NoError(t, err)
 
-	custom := &http.Client{Timeout: 7 * time.Second}
+	transport := &http.Transport{}
+	custom := &http.Client{Transport: transport, Timeout: 7 * time.Second}
 	client.HTTPClient = custom
 
 	assert.Same(t, custom, client.httpClient())
+	assert.Same(t, transport, client.requestHTTPClient().Transport)
+	assert.Equal(t, custom.Timeout, client.requestHTTPClient().Timeout)
+	assert.Equal(t, http.ErrUseLastResponse, client.requestHTTPClient().CheckRedirect(nil, nil))
 }
 
 func TestDataAPISensorRequest(t *testing.T) {
@@ -349,8 +353,9 @@ func TestDataAPISensorRejectsRedirects(t *testing.T) {
 	client, err := NewDataAPIClient("api-read-key")
 	assert.NoError(t, err)
 	client.baseURL = source.URL
+	client.HTTPClient = source.Client()
 
-	response, requestErr := client.SensorData(context.Background(), 17937, SensorDataOptions{})
+	response, requestErr := client.SensorData(context.Background(), 17937, SensorDataOptions{SensorReadKey: "private-read-key"})
 
 	assert.Nil(t, response)
 	assert.EqualError(t, requestErr, "purpleair: data API unexpected status 302")

@@ -84,6 +84,12 @@ func (c *DataAPIClient) httpClient() *http.Client {
 	return defaultHTTPClient()
 }
 
+func (c *DataAPIClient) requestHTTPClient() *http.Client {
+	httpClient := *c.httpClient()
+	httpClient.CheckRedirect = rejectRedirect
+	return &httpClient
+}
+
 // SensorData retrieves authenticated real-time data for one sensor.
 func (c *DataAPIClient) SensorData(ctx context.Context, sensorIndex int, options SensorDataOptions) (result *SensorDataResponse, returnErr error) {
 	if ctx == nil {
@@ -106,7 +112,7 @@ func (c *DataAPIClient) SensorData(ctx context.Context, sensorIndex int, options
 	}
 	request.Header.Set("X-API-Key", c.readAPIKey)
 
-	response, err := c.httpClient().Do(request)
+	response, err := c.requestHTTPClient().Do(request)
 	if err != nil {
 		return nil, dataAPIRequestError{cause: redactedDataAPIRequestCause(err)}
 	}
