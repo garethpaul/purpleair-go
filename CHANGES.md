@@ -8,6 +8,10 @@
   private sensor query credentials to another endpoint.
 - Strengthened the redirect regression to use a permissive caller client and a
   private sensor read key.
+- Implementation head `993d32d` passed hosted Go 1.25.11, Go 1.26.4, CodeQL
+  actions/Go analyses, and the aggregate gate on pull request #18.
+- Codex review stopped before analysis on OpenAI HTTP 401; immutable local,
+  remote, and PR heads matched and manual fallback review found no defects.
 
 ## 2026-06-26 06:30 UTC - P1 - Implement authenticated Data API client
 

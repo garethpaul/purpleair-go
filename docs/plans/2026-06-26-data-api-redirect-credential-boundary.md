@@ -21,3 +21,7 @@ caller's transport, timeout, jar, and other settings without mutating its client
   requires the original 302 response and zero destination requests.
 - Full `make check`, Go race, vet, hosted, and exact-head review evidence is
   recorded before merge.
+- Pull request #18 implementation head `993d32d` passed hosted Go 1.25.11, Go
+  1.26.4, CodeQL actions/Go analyses, and the aggregate gate.
+- Codex review stopped before analysis on OpenAI HTTP 401; immutable head
+  comparison and manual fallback review found no actionable defects.
