@@ -236,6 +236,8 @@ git commit -m "docs: define authenticated API adoption"
   absolute Makefile path outside the repository in the official Go 1.25 image.
 - Confirmed ten hostile mutations fail closed across the design, README, and
   roadmap contracts, then passed `git diff --check`.
+- Phase one was subsequently implemented as the separate authenticated client
+  recorded in `2026-06-25-authenticated-data-api-implementation.md`.
 
 ## Residual Risk
 

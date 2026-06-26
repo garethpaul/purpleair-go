@@ -27,6 +27,8 @@ for path in \
   "AGENTS.md" \
   "client.go" \
   "client_test.go" \
+  "data_api.go" \
+  "data_api_test.go" \
   "go.mod" \
   "go.sum" \
   "results.go" \
@@ -48,6 +50,7 @@ for path in \
   "docs/plans/2026-06-25-default-redirect-policy.md" \
   "docs/plans/2026-06-25-sensor-caller-migration.md" \
   "docs/plans/2026-06-25-authenticated-data-api-design.md" \
+  "docs/plans/2026-06-25-authenticated-data-api-implementation.md" \
   "scripts/check-module-tidy.sh" \
   "scripts/test-module-tidy.sh" \
   "scripts/test-makefile-root.sh" \
@@ -77,6 +80,68 @@ if ! grep -Fq 'authenticated Data API design' "$README"; then
 fi
 if grep -Fq 'Design modern authenticated PurpleAir API support' "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must not retain the completed authenticated API design priority." >&2
+  exit 1
+fi
+
+DATA_API_SOURCE="$ROOT_DIR/data_api.go"
+DATA_API_TESTS="$ROOT_DIR/data_api_test.go"
+DATA_API_IMPLEMENTATION_PLAN="$ROOT_DIR/docs/plans/2026-06-25-authenticated-data-api-implementation.md"
+for contract in \
+  'defaultDataAPIBaseURL   = "https://api.purpleair.com/v1"' \
+  'dataAPISensorFields     = "name,last_seen,latitude,longitude,pm2.5_atm"' \
+  'maxDataAPIResponseBytes = 1 << 20' \
+  'type DataAPIClient struct {' \
+  'func NewDataAPIClient(readAPIKey string)' \
+  'func (c *DataAPIClient) SensorData(' \
+  'request.Header.Set("X-API-Key", c.readAPIKey)' \
+  'query.Set("read_key", readKey)' \
+  'redactedDataAPIRequestCause(err)' \
+  'io.LimitReader(response.Body, maxDataAPIResponseBytes+1)' \
+  'validateDataAPIResponse(decoded, sensorIndex)'; do
+  if ! grep -Fq "$contract" "$DATA_API_SOURCE"; then
+    printf '%s\n' "Authenticated Data API source must preserve: $contract" >&2
+    exit 1
+  fi
+done
+
+for test_contract in \
+  "TestNewDataAPIClientRequiresReadAPIKey" \
+  "TestDataAPISensorRequest" \
+  "TestDataAPIPrivateSensorRequest" \
+  "TestDataAPISensorRejectsInvalidInputsBeforeIO" \
+  "TestDataAPISensorValidatesResponse" \
+  "TestDataAPISensorRejectsMalformedTrailingAndOversizedResponses" \
+  "TestDataAPISensorReturnsDetailSafeStatusErrors" \
+  "TestDataAPISensorClosesBodiesAndPreservesPrimaryFailure" \
+  "TestDataAPISensorPreservesRequestCauseWithoutCredentialDetails" \
+  "TestDataAPISensorRejectsRedirects"; do
+  if ! grep -Fq "$test_contract" "$DATA_API_TESTS"; then
+    printf '%s\n' "Authenticated Data API tests must preserve: $test_contract" >&2
+    exit 1
+  fi
+done
+
+for evidence in \
+  "Status: Completed" \
+  "legacy \`Client\`" \
+  "X-API-Key" \
+  "1 MiB" \
+  "no automatic retries" \
+  "make check"; do
+  if ! grep -Fq "$evidence" "$DATA_API_IMPLEMENTATION_PLAN"; then
+    printf '%s\n' "Authenticated Data API implementation plan must preserve: $evidence" >&2
+    exit 1
+  fi
+done
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq "DataAPIClient" "$document"; then
+    printf '%s\n' "$document must document the authenticated DataAPIClient boundary." >&2
+    exit 1
+  fi
+done
+if grep -Fq 'Implement phase 1 of the completed authenticated Data API design' "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must remove the completed authenticated implementation priority." >&2
   exit 1
 fi
 

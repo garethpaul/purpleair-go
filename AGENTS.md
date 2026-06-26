@@ -54,6 +54,11 @@
   documents why errors may be collapsed to `nil`.
 - `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so endpoint configuration does not hide secrets in the base URL.
 - `NewClientWithBaseURL` rejects URL fragments so local-only tokens or notes do not hide in endpoint configuration.
+- `DataAPIClient` sends organization read keys only in `X-API-Key`, keeps
+  optional sensor read keys request-scoped, caps responses at 1 MiB, and never
+  retries automatically because provider point policy belongs to callers.
+- Keep the legacy `Client` and authenticated `DataAPIClient` wire models and
+  credential boundaries separate.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-purpleair-go-baseline.md` for the canonical deterministic client-test baseline.

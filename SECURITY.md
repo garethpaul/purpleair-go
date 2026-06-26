@@ -73,11 +73,13 @@ The default `www.purpleair.com/json?show=` URL is a legacy map endpoint, not
 the current authenticated PurpleAir API. Its availability must not be assumed,
 and modern API keys or schemas must not be bolted onto this compatibility path
 without a separate public API and security review.
-The authenticated Data API design keeps organization API read keys in request
-headers and sensor read keys in individual private-sensor requests. Neither key
-belongs in source control, URLs shared in diagnostics, logs, or returned errors.
-The legacy Client remains unchanged until that separate API is implemented and
-reviewed.
+The authenticated `DataAPIClient` keeps organization API read keys in the
+`X-API-Key` request header and sensor read keys in individual private-sensor
+requests. Neither key belongs in source control, URLs shared in diagnostics,
+logs, provider response errors, or returned request errors. The client caps
+responses at 1 MiB, rejects redirects by default, validates sensor identity and
+typed measurements, and performs no automatic retries that could consume
+additional provider points. The legacy `Client` remains unchanged.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 Responses with a declared Content-Length above the limit are rejected before

@@ -49,6 +49,34 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
+### Authenticated Data API
+
+Use `DataAPIClient` for PurpleAir's authenticated real-time sensor API. The
+organization read key is trimmed once, retained in the client, and sent only in
+the `X-API-Key` header. A private sensor read key is optional and applies only
+to that request:
+
+```go
+client, err := purpleair.NewDataAPIClient(os.Getenv("PURPLEAIR_READ_API_KEY"))
+if err != nil {
+    return err
+}
+
+response, err := client.SensorData(ctx, 17937, purpleair.SensorDataOptions{
+    SensorReadKey: os.Getenv("PURPLEAIR_SENSOR_READ_KEY"),
+})
+if err != nil {
+    return err
+}
+fmt.Println(response.Sensor.SensorIndex, response.Sensor.PM25ATM)
+```
+
+The phase-one client requests only `name`, `last_seen`, `latitude`,
+`longitude`, and raw `pm2.5_atm`. It performs no AQI conversion, retries,
+backoff, caching, or point-budget management. Callers own those policies and
+should consider that retries can consume provider points. Deterministic tests
+use local transports only; do not add live keys or live API calls to the suite.
+
 ### Migrating from `Sensor`
 
 `SensorWithError` is the preferred default for new and migrated callers. The
@@ -84,10 +112,11 @@ verify the wrapper still returns data on success and `nil` on failure.
   a redirect to an over-quota host. Do not assume the default endpoint is
   available; use a reviewed compatible endpoint or proxy until modern API
   support is designed with its different authentication and response schema.
-- The implementation-ready [authenticated Data API design](docs/plans/2026-06-25-authenticated-data-api-design.md)
-  specifies a separate `DataAPIClient`, `X-API-Key` ownership, private sensor
-  read keys, a modern response model, point-aware no-retry behavior, and an
-  unchanged legacy `Client`. The modern client is designed but not implemented.
+- The completed [authenticated Data API design](docs/plans/2026-06-25-authenticated-data-api-design.md)
+  and [implementation record](docs/plans/2026-06-25-authenticated-data-api-implementation.md)
+  define the separate `DataAPIClient`, `X-API-Key` ownership, private sensor
+  read keys, typed response model, point-aware no-retry behavior, and unchanged
+  legacy `Client`.
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls. The compatibility
