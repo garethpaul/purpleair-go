@@ -80,6 +80,9 @@ logs, provider response errors, or returned request errors. The client caps
 responses at 1 MiB, rejects redirects by default, validates sensor identity and
 typed measurements, and performs no automatic retries that could consume
 additional provider points. The legacy `Client` remains unchanged.
+Authenticated redirect rejection is request-owned even with a custom
+`HTTPClient`; transport and timeout customization must not override the
+credential boundary.
 Sensor responses should stay bounded before JSON parsing so a bad endpoint or
 custom transport cannot force unbounded memory reads.
 Responses with a declared Content-Length above the limit are rejected before

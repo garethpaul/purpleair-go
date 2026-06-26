@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-26 - P1 - Preserve authenticated redirect isolation
+
+- Cloned caller HTTP clients per authenticated request and forced redirect
+  rejection without mutating caller transport, timeout, jar, or other policy.
+- Prevented custom redirect settings from forwarding organization headers or
+  private sensor query credentials to another endpoint.
+- Strengthened the redirect regression to use a permissive caller client and a
+  private sensor read key.
+
 ## 2026-06-26 06:30 UTC - P1 - Implement authenticated Data API client
 
 ### Summary

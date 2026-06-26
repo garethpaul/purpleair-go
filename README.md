@@ -71,6 +71,11 @@ if err != nil {
 fmt.Println(response.Sensor.SensorIndex, response.Sensor.PM25ATM)
 ```
 
+Authenticated requests always reject redirects, including when a caller
+supplies a custom `HTTPClient`, so `X-API-Key` and private `read_key` credentials
+cannot be forwarded to a redirect destination. The caller's transport, timeout,
+cookie jar, and other client settings remain unchanged.
+
 The phase-one client requests only `name`, `last_seen`, `latitude`,
 `longitude`, and raw `pm2.5_atm`. It performs no AQI conversion, retries,
 backoff, caching, or point-budget management. Callers own those policies and
