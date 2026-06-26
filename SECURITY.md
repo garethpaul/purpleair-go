@@ -24,6 +24,11 @@ Helpful reports include:
 
 ## Project Security Posture
 
+`SensorWithError` is the preferred default because it preserves request,
+response, parsing, and validation failures for caller policy. The deprecated
+`Sensor` wrapper remains compatibility-only and intentionally collapses those
+failures to `nil`.
+
 - This repository appears to be a Go project. The active security scope is the code and documentation on the default branch.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.

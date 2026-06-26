@@ -46,12 +46,45 @@ for path in \
   "docs/plans/2026-06-17-active-stack-nil-context-guard.md" \
   "docs/plans/2026-06-21-safe-make-root.md" \
   "docs/plans/2026-06-25-default-redirect-policy.md" \
+  "docs/plans/2026-06-25-sensor-caller-migration.md" \
   "scripts/check-module-tidy.sh" \
   "scripts/test-module-tidy.sh" \
   "scripts/test-makefile-root.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+if ! grep -Fq "// Deprecated: Use SensorWithError" "$ROOT_DIR/sensor.go"; then
+  printf '%s\n' "Sensor compatibility wrapper must carry standard Go deprecation guidance." >&2
+  exit 1
+fi
+
+unexpected_sensor_callers=$(grep -RIn --include='*.go' '\.Sensor(' "$ROOT_DIR" |
+  grep -v '/sensor_test.go:' || true)
+if [ -n "$unexpected_sensor_callers" ]; then
+  printf '%s\n' "Repository Go callers must use SensorWithError or SensorWithContext:" >&2
+  printf '%s\n' "$unexpected_sensor_callers" >&2
+  exit 1
+fi
+
+for document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq '`SensorWithError` is the preferred default' "$document"; then
+    printf '%s\n' "$document must preserve Sensor caller migration guidance." >&2
+    exit 1
+  fi
+done
+
+if grep -Fq -- '- Migrate callers from `Sensor` to `SensorWithError`' "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must remove the completed Sensor caller migration priority." >&2
+  exit 1
+fi
+
+SENSOR_MIGRATION_PLAN="$ROOT_DIR/docs/plans/2026-06-25-sensor-caller-migration.md"
+if ! grep -Fq "Status: Completed" "$SENSOR_MIGRATION_PLAN" ||
+  ! grep -Fq "make check" "$SENSOR_MIGRATION_PLAN"; then
+  printf '%s\n' "Sensor caller migration plan must record completed status and verification." >&2
+  exit 1
+fi
 
 if ! grep -Fq "if ctx == nil" "$ROOT_DIR/sensor.go" ||
   ! grep -Fq "purpleair: context is required" "$ROOT_DIR/sensor.go"; then

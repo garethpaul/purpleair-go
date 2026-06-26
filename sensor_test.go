@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -65,6 +66,16 @@ func TestSensorReturnsDataOnSuccess(t *testing.T) {
 
 	assert.NotNil(t, sensor)
 	assert.Equal(t, 17937, sensor.Results[0].ID)
+}
+
+func TestSensorDeprecationAndCallerBoundary(t *testing.T) {
+	sensorSource, err := os.ReadFile("sensor.go")
+	assert.NoError(t, err)
+	assert.Contains(t, string(sensorSource), "// Deprecated: Use SensorWithError")
+
+	exampleSource, err := os.ReadFile("example_test.go")
+	assert.NoError(t, err)
+	assert.NotContains(t, string(exampleSource), ".Sensor(")
 }
 
 type failingReader struct {

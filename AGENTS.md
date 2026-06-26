@@ -49,6 +49,9 @@
 
 - Detected references to PurpleAir. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Keep hosted validation credential-free and no-live-network; do not add live PurpleAir calls or credentialed smoke tests without separate security review.
+- `SensorWithError` is the preferred default for repository callers. Keep direct
+  `Sensor` calls confined to its compatibility tests unless a change explicitly
+  documents why errors may be collapsed to `nil`.
 - `NewClientWithBaseURL` rejects URLs with embedded userinfo credentials so endpoint configuration does not hide secrets in the base URL.
 - `NewClientWithBaseURL` rejects URL fragments so local-only tokens or notes do not hide in endpoint configuration.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

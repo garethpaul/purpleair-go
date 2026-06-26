@@ -1,5 +1,58 @@
 # Changes
 
+## 2026-06-26 03:45 UTC - P2 - Migrate Sensor callers
+
+### Summary
+
+Marked the pointer-only `Sensor` wrapper deprecated and documented
+`SensorWithError` as the preferred default without removing compatibility.
+`SensorWithError` is the preferred default for repository and downstream
+callers that need actionable lookup failures.
+
+### Work completed
+
+- Added standard Go deprecation documentation that points callers to
+  `SensorWithError` for explicit request, response, parsing, and validation
+  failures.
+- Added before/after migration guidance and retained `SensorWithContext` for
+  caller-owned cancellation and deadlines.
+- Added baseline and focused test contracts that keep direct `Sensor` calls
+  confined to the two compatibility tests.
+- Removed the completed caller-migration roadmap item.
+
+### Threads
+
+- None; the focused compatibility/documentation change was completed directly.
+
+### Files changed
+
+- `sensor.go` - standard deprecation GoDoc with unchanged wrapper behavior.
+- `sensor_test.go` and `scripts/check-baseline.sh` - migration contracts.
+- README, security, vision, agent guidance, and completed plan - caller guidance.
+
+### Validation
+
+- The focused test failed first because `Sensor` lacked the deprecation marker.
+- Go 1.26.4 container verification passed `make check`, all Make aliases,
+  explicit race tests, external-directory `make check`, 70 Make authority
+  cases, the module-tidy matrix, and the focused caller-boundary test.
+- Hosted and review evidence is recorded before merge.
+
+### Bugs / findings
+
+- P2: Repository examples had migrated, but the compatibility API did not tell
+  downstream callers that it discards actionable errors.
+
+### Blockers
+
+- No API or runtime behavior changes; external callers must choose when to
+  migrate from the deprecated wrapper.
+
+### Next action
+
+- Design authenticated PurpleAir API support without silently changing the
+  legacy map-response model.
+
 ## 2026-06-25 23:53 UTC - P1 - Clear redirect-policy PR for merge
 
 ### Summary

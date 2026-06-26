@@ -49,6 +49,34 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
+### Migrating from `Sensor`
+
+`SensorWithError` is the preferred default for new and migrated callers. The
+legacy `Sensor(sensorID)` method remains available for source compatibility, but
+it converts every lookup error to `nil` and is now deprecated.
+
+Replace pointer-only lookups:
+
+```go
+sensor := client.Sensor("17937")
+if sensor == nil {
+    return
+}
+```
+
+with explicit error handling:
+
+```go
+sensor, err := client.SensorWithError("17937")
+if err != nil {
+    return err
+}
+```
+
+Use `SensorWithContext` instead when the caller owns cancellation or a deadline.
+The repository keeps direct `Sensor` calls only in compatibility tests that
+verify the wrapper still returns data on success and `nil` on failure.
+
 - Import `github.com/garethpaul/purpleair-go` from Go code and construct a client with `NewClient()`.
 - `NewClient()` retains the historical `https://www.purpleair.com/json?show=`
   map-response contract. This is a legacy endpoint, not PurpleAir's current
