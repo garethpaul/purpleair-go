@@ -55,10 +55,11 @@ Priority:
 - Wrap response read and decode failures with inspectable PurpleAir context;
   all non-nil response bodies are closed across success and failure paths
 - Keep GitHub Actions aligned with the mocked `make check` baseline
+- `SensorWithError` is the preferred default for repository examples and new
+  callers; direct `Sensor` calls remain confined to compatibility tests.
 
 Next priorities:
 
-- Migrate callers from `Sensor` to `SensorWithError`
 - Design modern authenticated PurpleAir API support without changing the
   legacy map-response model silently
 

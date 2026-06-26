@@ -33,6 +33,9 @@ func (err sensorRequestError) Unwrap() error {
 }
 
 // Sensor gets sensor data and returns nil when the compatibility lookup fails.
+//
+// Deprecated: Use SensorWithError so request, response, and parsing failures
+// remain available to the caller.
 func (c *Client) Sensor(sensorId string) *PurpleAir {
 	pa, err := c.SensorWithError(sensorId)
 	if err != nil {
