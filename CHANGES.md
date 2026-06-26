@@ -1,5 +1,64 @@
 # Changes
 
+## 2026-06-25 23:21 PDT - P2 - Design authenticated Data API support
+
+### Summary
+
+Completed an implementation-ready design for opt-in PurpleAir Data API support
+without silently changing the legacy endpoint, constructors, or result model.
+
+### Work completed
+
+- Compared silent migration, mode flags, and a separate authenticated client.
+- Selected a separate `DataAPIClient` with header-only API-key ownership,
+  optional private sensor read keys, typed modern response fields, and no
+  automatic retries.
+- Defined four TDD implementation tasks, validation and error boundaries,
+  deferred scope, and official PurpleAir evidence.
+- Updated the roadmap from design to phase-one implementation.
+
+### Threads
+
+- None; repository and official provider evidence were reviewed directly.
+
+### Files changed
+
+- `docs/plans/2026-06-25-authenticated-data-api-design.md` — architecture,
+  proposed public API, TDD tasks, sources, and deferred scope.
+- `README.md`, `SECURITY.md`, `VISION.md` — adoption, credential, and roadmap
+  boundaries.
+- `scripts/check-baseline.sh` — durable design and documentation contracts.
+- `CHANGES.md` — this cycle record.
+
+### Validation
+
+- Red baseline — failed for the missing design artifact before implementation.
+- Official PurpleAir API, key, sensor-read-key, field, points, and response
+  guidance — reviewed June 25, 2026.
+- `make check` in the official Go 1.25 container — passed, including format,
+  vet, unit, race, 70 Make authority cases, baseline, and module-tidy checks.
+- `make -f /src/Makefile check` from outside the repository in the official Go
+  1.25 container — passed.
+- Ten hostile design mutations — rejected missing status, client, header,
+  endpoint, sensor-key, points, compatibility, retry, README, and roadmap
+  contracts.
+- `git diff --check` — passed.
+
+### Bugs / findings
+
+- P2 architecture: the authenticated API has incompatible credentials, endpoint,
+  response envelope, field names, and availability semantics; silently reusing
+  `Client` or `PurpleAir` would create a breaking and ambiguous boundary.
+
+### Blockers
+
+- No live API key is available or required for this design-only cycle.
+
+### Next action
+
+- Implement Task 1 of the authenticated Data API plan with constructor and
+  credential-ownership tests.
+
 ## 2026-06-26 03:45 UTC - P2 - Migrate Sensor callers
 
 ### Summary

@@ -60,8 +60,8 @@ Priority:
 
 Next priorities:
 
-- Design modern authenticated PurpleAir API support without changing the
-  legacy map-response model silently
+- Implement phase 1 of the completed authenticated Data API design as a separate
+  client without changing the legacy map-response model
 
 Contribution rules:
 
