@@ -47,12 +47,38 @@ for path in \
   "docs/plans/2026-06-21-safe-make-root.md" \
   "docs/plans/2026-06-25-default-redirect-policy.md" \
   "docs/plans/2026-06-25-sensor-caller-migration.md" \
+  "docs/plans/2026-06-25-authenticated-data-api-design.md" \
   "scripts/check-module-tidy.sh" \
   "scripts/test-module-tidy.sh" \
   "scripts/test-makefile-root.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+AUTHENTICATED_API_PLAN="$ROOT_DIR/docs/plans/2026-06-25-authenticated-data-api-design.md"
+for design_contract in \
+  "Status: Completed" \
+  "DataAPIClient" \
+  "X-API-Key" \
+  "api.purpleair.com/v1/sensors/{sensor_index}" \
+  "sensor read key" \
+  "points-based system" \
+  "legacy Client remains unchanged" \
+  "no automatic retries" \
+  "make check"; do
+  if ! grep -Fq "$design_contract" "$AUTHENTICATED_API_PLAN"; then
+    printf '%s\n' "Authenticated API design must preserve: $design_contract" >&2
+    exit 1
+  fi
+done
+if ! grep -Fq 'authenticated Data API design' "$README"; then
+  printf '%s\n' "README must link the authenticated Data API design." >&2
+  exit 1
+fi
+if grep -Fq 'Design modern authenticated PurpleAir API support' "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must not retain the completed authenticated API design priority." >&2
+  exit 1
+fi
 
 if ! grep -Fq "// Deprecated: Use SensorWithError" "$ROOT_DIR/sensor.go"; then
   printf '%s\n' "Sensor compatibility wrapper must carry standard Go deprecation guidance." >&2

@@ -84,6 +84,10 @@ verify the wrapper still returns data on success and `nil` on failure.
   a redirect to an over-quota host. Do not assume the default endpoint is
   available; use a reviewed compatible endpoint or proxy until modern API
   support is designed with its different authentication and response schema.
+- The implementation-ready [authenticated Data API design](docs/plans/2026-06-25-authenticated-data-api-design.md)
+  specifies a separate `DataAPIClient`, `X-API-Key` ownership, private sensor
+  read keys, a modern response model, point-aware no-retry behavior, and an
+  unchanged legacy `Client`. The modern client is designed but not implemented.
 - Use `NewClientWithBaseURL(baseURL)` when a local proxy, fixture server, or
   alternate PurpleAir-compatible endpoint is needed.
 - Use `SensorWithError(sensorID)` for error-returning calls. The compatibility
